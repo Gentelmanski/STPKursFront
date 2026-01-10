@@ -1,1 +1,63 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Панель пользователя</h1>
+    <div class="user-info">
+      <span>Добро пожаловать, {{ authService.getCurrentUser()?.username }}!</span>
+      <button (click)="logout()" class="btn-logout">Выйти</button>
+    </div>
+  </header>
+
+  <main class="dashboard-content">
+    <div class="welcome-section">
+      <h2>Добро пожаловать в личный кабинет!</h2>
+      <p>Здесь вы можете управлять своим профилем и настройками.</p>
+    </div>
+
+    <div class="dashboard-cards">
+      <div class="card">
+        <div class="card-icon">👤</div>
+        <h3>Профиль</h3>
+        <p>Управление личной информацией</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <h3>Настройки</h3>
+        <p>Настройки аккаунта</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>Статистика</h3>
+        <p>Просмотр активности</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <h3>Безопасность</h3>
+        <p>Настройки безопасности</p>
+      </div>
+    </div>
+
+    <div class="user-details" *ngIf="authService.getCurrentUser()">
+      <h3>Информация о пользователе:</h3>
+      <ul>
+        <li><strong>ID:</strong> {{ authService.getCurrentUser()?.id }}</li>
+        <li><strong>Имя пользователя:</strong> {{ authService.getCurrentUser()?.username }}</li>
+        <li><strong>Email:</strong> {{ authService.getCurrentUser()?.email }}</li>
+        <li><strong>Роль:</strong> {{ authService.getCurrentUser()?.role }}</li>
+        <li><strong>Дата регистрации:</strong> {{ authService.getCurrentUser()?.created_at | date }}</li>
+      </ul>
+    </div>
+
+    <div class="api-response" *ngIf="dashboardData">
+      <h3>Ответ от сервера:</h3>
+      <pre>{{ dashboardData | json }}</pre>
+    </div>
+
+    <div class="loading" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Загрузка данных...</p>
+    </div>
+  </main>
+</div>

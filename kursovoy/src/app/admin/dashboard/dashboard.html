@@ -1,1 +1,131 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Панель администратора</h1>
+    <div class="user-info">
+      <div class="admin-badge">👑 АДМИНИСТРАТОР</div>
+      <span>{{ authService.getCurrentUser()?.username }}</span>
+      <button (click)="logout()" class="btn-logout">Выйти</button>
+    </div>
+  </header>
+
+  <main class="dashboard-content">
+    <div class="admin-welcome">
+      <h2>Административная панель управления</h2>
+      <p>Здесь вы можете управлять системой и пользователями.</p>
+    </div>
+
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="stat-value">125</div>
+        <div class="stat-label">Всего пользователей</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Новых сегодня</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Администраторов</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">98%</div>
+        <div class="stat-label">Активность системы</div>
+      </div>
+    </div>
+
+    <div class="admin-controls">
+      <h3>Быстрые действия</h3>
+      <div class="controls-grid">
+        <button class="control-btn">
+          <span class="icon">👥</span>
+          Управление пользователями
+        </button>
+        <button class="control-btn">
+          <span class="icon">📊</span>
+          Статистика системы
+        </button>
+        <button class="control-btn">
+          <span class="icon">⚙️</span>
+          Настройки системы
+        </button>
+        <button class="control-btn">
+          <span class="icon">📝</span>
+          Логи и отчеты
+        </button>
+        <button class="control-btn">
+          <span class="icon">🔐</span>
+          Настройки безопасности
+        </button>
+        <button class="control-btn">
+          <span class="icon">🔄</span>
+          Резервное копирование
+        </button>
+      </div>
+    </div>
+
+    <div class="user-management">
+      <h3>Последние пользователи</h3>
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Имя пользователя</th>
+            <th>Email</th>
+            <th>Роль</th>
+            <th>Дата регистрации</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of sampleUsers">
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <span [class]="'role-badge ' + user.role">
+                {{ user.role === 'admin' ? 'Админ' : 'Пользователь' }}
+              </span>
+            </td>
+            <td>{{ user.created_at | date:'dd.MM.yyyy' }}</td>
+            <td>
+              <button class="action-btn edit">✏️</button>
+              <button class="action-btn delete">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="admin-info" *ngIf="authService.getCurrentUser()">
+      <h3>Информация об администраторе:</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>ID администратора:</label>
+          <span>{{ authService.getCurrentUser()?.id }}</span>
+        </div>
+        <div class="info-item">
+          <label>Имя пользователя:</label>
+          <span>{{ authService.getCurrentUser()?.username }}</span>
+        </div>
+        <div class="info-item">
+          <label>Email:</label>
+          <span>{{ authService.getCurrentUser()?.email }}</span>
+        </div>
+        <div class="info-item">
+          <label>Уровень доступа:</label>
+          <span class="admin-role">Администратор</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="api-response" *ngIf="dashboardData">
+      <h3>Ответ от сервера (админ):</h3>
+      <pre>{{ dashboardData | json }}</pre>
+    </div>
+
+    <div class="loading" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Загрузка данных администратора...</p>
+    </div>
+  </main>
+</div>
