@@ -1,12 +1,35 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import { ApplicationConfig, importProvidersFrom } from '@angular/core';
 import { provideRouter } from '@angular/router';
-
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { JwtModule, JWT_OPTIONS } from '@auth0/angular-jwt';
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+
+export function tokenGetter() {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('auth_token');
+  }
+  return null;
+}
+
+export function jwtOptionsFactory() {
+  return {
+    tokenGetter: tokenGetter,
+    allowedDomains: ['localhost:8080'],
+    disallowedRoutes: []
+  };
+}
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes), provideClientHydration(withEventReplay())
+    provideRouter(routes),
+    provideHttpClient(withFetch()), // Добавляем withFetch()
+    importProvidersFrom(
+      JwtModule.forRoot({
+        jwtOptionsProvider: {
+          provide: JWT_OPTIONS,
+          useFactory: jwtOptionsFactory
+        }
+      })
+    )
   ]
 };

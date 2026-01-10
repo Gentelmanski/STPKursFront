@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { isPlatformBrowser } from '@angular/common';
 import { User, RegisterRequest, LoginRequest, AuthResponse } from '../models/user';
 import { TokenService } from './token';
 
@@ -15,17 +16,24 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    @Inject(PLATFORM_ID) private platformId: any
   ) {
     this.loadCurrentUser();
+  }
+
+  private isBrowser(): boolean {
+    return isPlatformBrowser(this.platformId);
   }
 
   register(registerData: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/register`, registerData)
       .pipe(
         tap(response => {
-          this.tokenService.setToken(response.token);
-          this.currentUserSubject.next(response.user);
+          if (this.isBrowser()) {
+            this.tokenService.setToken(response.token);
+            this.currentUserSubject.next(response.user);
+          }
         })
       );
   }
@@ -34,20 +42,28 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`, loginData)
       .pipe(
         tap(response => {
-          this.tokenService.setToken(response.token);
-          this.currentUserSubject.next(response.user);
+          if (this.isBrowser()) {
+            this.tokenService.setToken(response.token);
+            this.currentUserSubject.next(response.user);
+          }
         })
       );
   }
 
   logout(): void {
-    this.tokenService.removeToken();
-    this.currentUserSubject.next(null);
+    if (this.isBrowser()) {
+      this.tokenService.removeToken();
+      this.currentUserSubject.next(null);
+    }
   }
 
   getProfile(): Observable<User> {
     return this.http.get<User>(`${this.apiUrl}/profile`).pipe(
-      tap(user => this.currentUserSubject.next(user))
+      tap(user => {
+        if (this.isBrowser()) {
+          this.currentUserSubject.next(user);
+        }
+      })
     );
   }
 
@@ -56,11 +72,17 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
+    if (!this.isBrowser()) {
+      return false;
+    }
     const token = this.tokenService.getToken();
     return !!token && !this.tokenService.isTokenExpired();
   }
 
   hasRole(role: string): boolean {
+    if (!this.isBrowser()) {
+      return false;
+    }
     const currentUser = this.getCurrentUser();
     return currentUser?.role === role;
   }

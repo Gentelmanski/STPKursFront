@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import {
   HttpRequest,
   HttpHandler,
@@ -11,14 +11,18 @@ import { TokenService } from './token';
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private tokenService: TokenService) {}
+  constructor(
+    private tokenService: TokenService
+  ) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.tokenService.getToken();
     
     if (token) {
       const cloned = request.clone({
-        headers: request.headers.set('Authorization', `Bearer ${token}`)
+        setHeaders: {
+          Authorization: `Bearer ${token}`
+        }
       });
       return next.handle(cloned);
     }
