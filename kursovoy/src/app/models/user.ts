@@ -12,6 +12,7 @@ export interface RegisterRequest {
     username: string;
     email: string;
     password: string;
+    role: 'user' | 'admin'; // ← Добавьте это поле
 }
 
 export interface LoginRequest {

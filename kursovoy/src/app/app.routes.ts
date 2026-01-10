@@ -21,5 +21,5 @@ export const routes: Routes = [
     canActivate: [AuthGuard],
     data: { role: 'admin' }
   },
-  { path: '**', redirectTo: '/login' }
+  { path: '**', redirectTo: '/login' } // Все несуществующие маршруты ведут на вход
 ];

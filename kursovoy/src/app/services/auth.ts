@@ -1,5 +1,6 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router'; // ← Добавьте импорт Router
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private tokenService: TokenService,
+    private router: Router, // ← Добавьте Router в конструктор
     @Inject(PLATFORM_ID) private platformId: any
   ) {
     this.loadCurrentUser();
@@ -54,6 +56,7 @@ export class AuthService {
     if (this.isBrowser()) {
       this.tokenService.removeToken();
       this.currentUserSubject.next(null);
+      this.router.navigate(['/login']); // ← Всегда перенаправляем на страницу входа
     }
   }
 

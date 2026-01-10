@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-register',
-  standalone: true, // ← Это standalone компонент
-  imports: [CommonModule, ReactiveFormsModule, RouterModule], // ← Добавьте импорты
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
     <div class="register-container">
       <div class="register-card">
@@ -75,6 +76,25 @@ import { RouterModule } from '@angular/router';
             @if (registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched) {
               <div class="error">
                 Пароли не совпадают
+              </div>
+            }
+          </div>
+
+          <!-- Комбобокс для выбора роли -->
+          <div class="form-group">
+            <label for="role">Выберите роль:</label>
+            <select 
+              id="role" 
+              formControlName="role"
+              class="form-control"
+            >
+              <option value="" disabled selected>Выберите роль</option>
+              <option value="user">👤 Обычный пользователь</option>
+              <option value="admin">👑 Администратор</option>
+            </select>
+            @if (registerForm.get('role')?.invalid && registerForm.get('role')?.touched) {
+              <div class="error">
+                Пожалуйста, выберите роль
               </div>
             }
           </div>
@@ -149,6 +169,15 @@ import { RouterModule } from '@angular/router';
       transition: border-color 0.3s;
     }
     
+    select.form-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    
     .form-control:focus {
       outline: none;
       border-color: #f5576c;
@@ -210,6 +239,15 @@ import { RouterModule } from '@angular/router';
     .login-link a:hover {
       text-decoration: underline;
     }
+    
+    option[value="user"] {
+      color: #495057;
+    }
+    
+    option[value="admin"] {
+      color: #e4465b;
+      font-weight: bold;
+    }
   `]
 })
 export class RegisterComponent {
@@ -226,7 +264,8 @@ export class RegisterComponent {
       username: ['', [Validators.required, Validators.minLength(3)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]]
+      confirmPassword: ['', [Validators.required]],
+      role: ['', [Validators.required]] // ← Добавлено поле для выбора роли
     }, { validators: this.passwordMatchValidator });
   }
 
@@ -247,6 +286,9 @@ export class RegisterComponent {
     this.authService.register(registerData).subscribe({
       next: (response) => {
         this.isLoading = false;
+        const roleName = response.user.role === 'admin' ? 'администратор' : 'пользователь';
+        alert(`✅ Вы успешно зарегистрированы как ${roleName}!`);
+        
         if (response.user.role === 'admin') {
           this.router.navigate(['/admin/dashboard']);
         } else {
@@ -255,7 +297,7 @@ export class RegisterComponent {
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorMessage = error.error?.error || 'Registration failed';
+        this.errorMessage = error.error?.error || 'Ошибка регистрации';
       }
     });
   }
