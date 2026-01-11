@@ -1,25 +1,30 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './auth/login/login';
-import { RegisterComponent } from './auth/register/register';
-import { UserDashboardComponent } from './user/dashboard/dashboard';
-import { AdminDashboardComponent } from './admin/dashboard/dashboard';
 import { AuthGuard } from './auth/auth-guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'register', component: RegisterComponent },
   { 
-    path: 'user/dashboard', 
-    component: UserDashboardComponent,
-    canActivate: [AuthGuard],
-    data: { role: 'user' }
+    path: '', 
+    loadComponent: () => import('./main-map/main-map').then(m => m.MainMapComponent),
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'login', 
+    loadComponent: () => import('./auth/login/login').then(m => m.LoginComponent)
+  },
+  { 
+    path: 'register', 
+    loadComponent: () => import('./auth/register/register').then(m => m.RegisterComponent)
+  },
+  { 
+    path: 'profile', 
+    loadComponent: () => import('./user-profile/user-profile').then(m => m.UserProfileComponent),
+    canActivate: [AuthGuard]
   },
   { 
     path: 'admin/dashboard', 
-    component: AdminDashboardComponent,
+    loadComponent: () => import('./admin/dashboard/dashboard').then(m => m.AdminDashboardComponent),
     canActivate: [AuthGuard],
     data: { role: 'admin' }
   },
-  { path: '**', redirectTo: '/login' } // Все несуществующие маршруты ведут на вход
+  { path: '**', redirectTo: '' }
 ];
