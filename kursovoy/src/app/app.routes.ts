@@ -1,3 +1,4 @@
+// app.routes.ts
 import { Routes } from '@angular/router';
 import { AuthGuard } from './auth/auth-guard';
 
@@ -17,7 +18,12 @@ export const routes: Routes = [
   },
   { 
     path: 'profile', 
-    loadComponent: () => import('./user-profile/user-profile').then(m => m.UserProfileComponent),
+    loadComponent: () => import('./user/dashboard/dashboard').then(m => m.UserDashboardComponent),
+    canActivate: [AuthGuard]
+  },
+  { 
+    path: 'user/dashboard', 
+    loadComponent: () => import('./user/dashboard/dashboard').then(m => m.UserDashboardComponent),
     canActivate: [AuthGuard]
   },
   { 

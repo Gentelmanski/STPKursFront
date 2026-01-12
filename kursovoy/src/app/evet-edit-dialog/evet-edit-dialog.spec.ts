@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { UserProfile } from './user-profile';
+import { EvetEditDialog } from './evet-edit-dialog';
 
-describe('UserProfile', () => {
-  let component: UserProfile;
-  let fixture: ComponentFixture<UserProfile>;
+describe('EvetEditDialog', () => {
+  let component: EvetEditDialog;
+  let fixture: ComponentFixture<EvetEditDialog>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [UserProfile]
+      imports: [EvetEditDialog]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(UserProfile);
+    fixture = TestBed.createComponent(EvetEditDialog);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
