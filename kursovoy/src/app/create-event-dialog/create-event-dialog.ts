@@ -91,11 +91,14 @@ declare const ymaps: any;
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Адрес мероприятия</mat-label>
-            <input matInput [formControl]="addressControl" placeholder="Введите адрес для поиска на карте">
+            <input matInput 
+                  [formControl]="addressControl" 
+                  placeholder="Введите адрес для поиска на карте"
+                  id="address-input"> <!-- Добавлен id -->
             <button mat-icon-button matSuffix (click)="geocodeAddress()" [disabled]="!addressControl.value">
               <mat-icon>search</mat-icon>
             </button>
-            <mat-hint>Начните вводить адрес и нажмите поиск для определения координат</mat-hint>
+            <mat-hint>Начните вводить адрес и выберите из списка или нажмите поиск</mat-hint>
           </mat-form-field>
         </div>
 
@@ -182,7 +185,7 @@ export class CreateEventDialogComponent implements OnInit {
   private placemark: any;
   isGeocoding = false;
 
-  constructor(
+    constructor(
     private fb: FormBuilder,
     private http: HttpClient,
     private snackBar: MatSnackBar,
@@ -269,6 +272,46 @@ export class CreateEventDialogComponent implements OnInit {
       });
     });
   }
+
+    private setupAddressAutocomplete(): void {
+    if (typeof ymaps === 'undefined') {
+      console.error('Yandex Maps API не загружена');
+      return;
+    }
+
+    ymaps.ready(() => {
+      // Находим input для адреса по его id
+      const addressInput = document.getElementById('address-input');
+      
+      if (!addressInput) {
+        console.error('Поле ввода адреса не найдено');
+        return;
+      }
+
+      // Создаем SuggestView для автодополнения
+      const suggestView = new ymaps.SuggestView('address-input', {
+        provider: {
+          // Можно указать конкретные регионы для ограничения
+          boundedBy: [[55.55, 37.35], [55.95, 37.85]] // Пример для Москвы
+        },
+        results: 5 // Количество подсказок
+      });
+
+      // Обработчик выбора подсказки
+      suggestView.events.add('select', (e: any) => {
+        const selectedItem = e.get('item');
+        const address = selectedItem.value;
+        
+        this.addressControl.setValue(address);
+        
+        // Автоматически выполняем геокодирование при выборе подсказки
+        setTimeout(() => {
+          this.geocodeAddress();
+        }, 100);
+      });
+    });
+  }
+
 
   private setMapCenter(coords: [number, number]): void {
     if (this.map) {
