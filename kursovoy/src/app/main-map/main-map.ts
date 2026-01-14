@@ -975,61 +975,78 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   }
 
   private displayEventsOnMap(events: any[]): void {
-    if (!this.objectManager) return;
+    if (!this.map || !ymaps) return;
 
+    // Удаляем старые метки
+    this.map.geoObjects.removeAll();
+
+    // Создаем ObjectManager для кластеризации
+    this.objectManager = new ymaps.ObjectManager({
+        clusterize: true,
+        gridSize: 64,
+        clusterDisableClickZoom: true
+    });
+
+    // Добавляем обработчик клика на объекты
+    this.objectManager.objects.events.add('click', (event: any) => {
+        const objectId = event.get('objectId');
+        const object = this.objectManager.objects.getById(objectId);
+        if (object) {
+            this.showEventDetails(object.properties.eventId);
+        }
+    });
+
+    // Создаем фичи для ObjectManager
     const features = events.map(event => ({
-      type: 'Feature',
-      id: event.id,
-      geometry: {
-        type: 'Point',
-        coordinates: [event.longitude, event.latitude]
-      },
-      properties: {
-        eventId: event.id,
-        title: event.title,
-        type: event.type,
-        date: event.event_date,
-        participants: event.participants_count,
-        balloonContent: this.createBalloonContent(event)
-      },
-      options: {
-        preset: this.getEventPreset(event),
-        iconColor: this.getEventColor(event)
-      }
+        type: 'Feature',
+        id: event.id,
+        geometry: {
+            type: 'Point',
+            coordinates: [event.longitude, event.latitude]
+        },
+        properties: {
+            eventId: event.id,
+            title: event.title,
+            type: event.type,
+            date: event.event_date,
+            participants: event.participants_count || 0,
+            balloonContent: this.createBalloonContent(event)
+        },
+        options: {
+            preset: this.getEventPreset(event),
+            iconColor: this.getEventColor(event)
+        }
     }));
 
-    this.objectManager.removeAll();
     this.objectManager.add(features);
-  }
+    this.map.geoObjects.add(this.objectManager);
+}
 
-  private createBalloonContent(event: any): string {
+private createBalloonContent(event: any): string {
     return `
-      <div class="event-balloon">
-        <h3>${event.title}</h3>
-        <p><strong>Тип:</strong> ${this.getEventTypeText(event.type)}</p>
-        <p><strong>Дата:</strong> ${this.formatDate(event.event_date)}</p>
-        <p><strong>Участников:</strong> ${event.participants_count || 0}${event.max_participants ? `/${event.max_participants}` : ''}</p>
-        <p><strong>Статус:</strong> ${this.getEventStatusText(event)}</p>
-        <button onclick="window.dispatchEvent(new CustomEvent('openEvent', {detail: ${event.id}}))">
-          Подробнее
-        </button>
-      </div>
+        <div class="event-balloon">
+            <h3>${event.title}</h3>
+            <p><strong>Тип:</strong> ${this.getEventTypeText(event.type)}</p>
+            <p><strong>Дата:</strong> ${this.formatDate(event.event_date)}</p>
+            <p><strong>Участников:</strong> ${event.participants_count || 0}</p>
+            <button onclick="window.dispatchEvent(new CustomEvent('openEvent', {detail: ${event.id}}))">
+                Подробнее
+            </button>
+        </div>
     `;
-  }
+}
 
   private getEventPreset(event: any): string {
     if (event.isParticipating) return 'islands#blueCircleDotIcon';
     if (!event.is_verified) return 'islands#grayCircleDotIcon';
-    if (this.isEventFull(event)) return 'islands#redCircleDotIcon';
     return 'islands#greenCircleDotIcon';
-  }
+}
 
   private getEventColor(event: any): string {
     if (event.isParticipating) return '#1976d2';
     if (!event.is_verified) return '#9e9e9e';
-    if (this.isEventFull(event)) return '#f44336';
     return '#4caf50';
-  }
+}
 
   calculateDistance(event: any): number | null {
     if (!this.userLocation || !event.latitude || !event.longitude) return null;
