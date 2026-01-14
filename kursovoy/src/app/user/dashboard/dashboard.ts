@@ -163,310 +163,319 @@ import { EditEventDialogComponent } from '../../evet-edit-dialog/evet-edit-dialo
         <mat-tab-group class="user-tabs" animationDuration="0ms" [(selectedIndex)]="selectedTab">
           <!-- Мои мероприятия -->
           <mat-tab label="Мои мероприятия">
-            <div class="tab-content">
-              <div class="tab-header">
-                <h2>Созданные мной мероприятия</h2>
-                <div class="tab-actions">
-                  <mat-form-field appearance="outline" class="search-field">
-                    <mat-label>Поиск мероприятий</mat-label>
-                    <input matInput [formControl]="myEventsSearchControl" placeholder="Поиск по названию...">
-                    <mat-icon matSuffix>search</mat-icon>
-                  </mat-form-field>
-                </div>
-              </div>
-              
-              <mat-card>
-                <div class="table-container">
-                  <table mat-table [dataSource]="myEventsDataSource" matSort class="user-table">
-                    
-                    <!-- Название Column -->
-                    <ng-container matColumnDef="title">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
-                      <td mat-cell *matCellDef="let event">
-                        <div class="event-title">
-                          {{event.title}}
-                          <span class="event-type">{{getEventTypeText(event.type)}}</span>
-                        </div>
-                        <div class="event-description" *ngIf="event.description">
-                          {{event.description | slice:0:100}}{{event.description.length > 100 ? '...' : ''}}
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Дата Column -->
-                    <ng-container matColumnDef="date">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
-                      <td mat-cell *matCellDef="let event">
-                        <div class="event-date">
-                          {{formatDate(event.event_date)}}
-                          <div class="event-status" [class]="getEventStatus(event)">
-                            {{getEventStatusText(event)}}
-                          </div>
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Участники Column -->
-                    <ng-container matColumnDef="participants">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Участники</th>
-                      <td mat-cell *matCellDef="let event">
-                        <div class="participants-info">
-                          <span class="participants-count">{{event.participants_count || 0}}</span>
-                          <span *ngIf="event.max_participants" class="max-participants">
-                            / {{event.max_participants}}
-                          </span>
-                          <mat-progress-bar 
-                            *ngIf="event.max_participants"
-                            mode="determinate" 
-                            [value]="(event.participants_count / event.max_participants) * 100"
-                            class="participants-progress">
-                          </mat-progress-bar>
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Статус верификации Column -->
-                    <ng-container matColumnDef="verification">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
-                      <td mat-cell *matCellDef="let event">
-                        <mat-chip [color]="getVerificationColor(event)" selected>
-                          {{getVerificationText(event)}}
-                        </mat-chip>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Действия Column -->
-                    <ng-container matColumnDef="actions">
-                      <th mat-header-cell *matHeaderCellDef>Действия</th>
-                      <td mat-cell *matCellDef="let event">
-                        <div class="action-buttons">
-                          <button mat-icon-button color="primary" 
-                                  (click)="viewEvent(event.id)"
-                                  matTooltip="Просмотреть">
-                            <mat-icon>visibility</mat-icon>
-                          </button>
-                          <button mat-icon-button color="primary" 
-                                  (click)="editEvent(event)"
-                                  [disabled]="!canEditEvent(event)"
-                                  matTooltip="Редактировать">
-                            <mat-icon>edit</mat-icon>
-                          </button>
-                          <button mat-icon-button color="warn" 
-                                  (click)="deleteEvent(event)"
-                                  [disabled]="!canDeleteEvent(event)"
-                                  matTooltip="Удалить">
-                            <mat-icon>delete</mat-icon>
-                          </button>
-                          <button mat-icon-button 
-                                  color="accent"
-                                  (click)="toggleEventStatus(event)"
-                                  [disabled]="!canToggleEvent(event)"
-                                  matTooltip="Активировать/Деактивировать">
-                            <mat-icon>{{event.is_active ? 'toggle_on' : 'toggle_off'}}</mat-icon>
-                          </button>
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <tr mat-header-row *matHeaderRowDef="myEventsDisplayedColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: myEventsDisplayedColumns;"></tr>
-                    
-                    <!-- Сообщение о пустой таблице -->
-                    <tr class="mat-row" *matNoDataRow>
-                      <td class="mat-cell" colspan="5">
-                        <div class="no-data-message">
-                          <mat-icon>event_busy</mat-icon>
-                          <p>Вы еще не создали ни одного мероприятия</p>
-                          <button mat-raised-button color="primary" (click)="openCreateEventDialog()">
-                            Создать первое мероприятие
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
+            <ng-template matTabContent>
+              <div class="tab-content">
+                <div class="tab-header">
+                  <h2>Созданные мной мероприятия</h2>
+                  <div class="tab-actions">
+                    <mat-form-field appearance="outline" class="search-field">
+                      <mat-label>Поиск мероприятий</mat-label>
+                      <input matInput [formControl]="myEventsSearchControl" placeholder="Поиск по названию...">
+                      <mat-icon matSuffix>search</mat-icon>
+                    </mat-form-field>
+                  </div>
                 </div>
                 
-                <mat-paginator [pageSizeOptions]="[5, 10, 25]" 
-                              showFirstLastButtons
-                              aria-label="Select page of events">
-                </mat-paginator>
-              </mat-card>
-            </div>
+                <mat-card>
+                  <div class="table-container">
+                    <table mat-table [dataSource]="myEventsDataSource" matSort class="user-table">
+                      
+                      <!-- Название Column -->
+                      <ng-container matColumnDef="title">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
+                        <td mat-cell *matCellDef="let event">
+                          <div class="event-title">
+                            {{event.title}}
+                            <span class="event-type">{{getEventTypeText(event.type)}}</span>
+                          </div>
+                          <div class="event-description" *ngIf="event.description">
+                            {{event.description | slice:0:100}}{{event.description.length > 100 ? '...' : ''}}
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Дата Column -->
+                      <ng-container matColumnDef="date">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
+                        <td mat-cell *matCellDef="let event">
+                          <div class="event-date">
+                            {{formatDate(event.event_date)}}
+                            <div class="event-status" [class]="getEventStatus(event)">
+                              {{getEventStatusText(event)}}
+                            </div>
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Участники Column -->
+                      <ng-container matColumnDef="participants">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Участники</th>
+                        <td mat-cell *matCellDef="let event">
+                          <div class="participants-info">
+                            <span class="participants-count">{{event.participants_count || 0}}</span>
+                            <span *ngIf="event.max_participants" class="max-participants">
+                              / {{event.max_participants}}
+                            </span>
+                            <mat-progress-bar 
+                              *ngIf="event.max_participants"
+                              mode="determinate" 
+                              [value]="(event.participants_count / event.max_participants) * 100"
+                              class="participants-progress">
+                            </mat-progress-bar>
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Статус верификации Column -->
+                      <ng-container matColumnDef="verification">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
+                        <td mat-cell *matCellDef="let event">
+                          <mat-chip [color]="getVerificationColor(event)" selected>
+                            {{getVerificationText(event)}}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Действия Column -->
+                      <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef>Действия</th>
+                        <td mat-cell *matCellDef="let event">
+                          <div class="action-buttons">
+                            <button mat-icon-button color="primary" 
+                                    (click)="viewEvent(event.id)"
+                                    matTooltip="Просмотреть">
+                              <mat-icon>visibility</mat-icon>
+                            </button>
+                            <button mat-icon-button color="primary" 
+                                    (click)="editEvent(event)"
+                                    [disabled]="!canEditEvent(event)"
+                                    matTooltip="Редактировать">
+                              <mat-icon>edit</mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" 
+                                    (click)="deleteEvent(event)"
+                                    [disabled]="!canDeleteEvent(event)"
+                                    matTooltip="Удалить">
+                              <mat-icon>delete</mat-icon>
+                            </button>
+                            <button mat-icon-button 
+                                    color="accent"
+                                    (click)="toggleEventStatus(event)"
+                                    [disabled]="!canToggleEvent(event)"
+                                    matTooltip="Активировать/Деактивировать">
+                              <mat-icon>{{event.is_active ? 'toggle_on' : 'toggle_off'}}</mat-icon>
+                            </button>
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <tr mat-header-row *matHeaderRowDef="myEventsDisplayedColumns"></tr>
+                      <tr mat-row *matRowDef="let row; columns: myEventsDisplayedColumns;"></tr>
+                      
+                      <!-- Сообщение о пустой таблице -->
+                      <tr class="mat-row" *matNoDataRow>
+                        <td class="mat-cell" colspan="5">
+                          <div class="no-data-message">
+                            <mat-icon>event_busy</mat-icon>
+                            <p>Вы еще не создали ни одного мероприятия</p>
+                            <button mat-raised-button color="primary" (click)="openCreateEventDialog()">
+                              Создать первое мероприятие
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                  
+                  <mat-paginator [pageSizeOptions]="[5, 10, 25]" 
+                                showFirstLastButtons
+                                aria-label="Select page of events">
+                  </mat-paginator>
+                </mat-card>
+              </div>
+            </ng-template>
           </mat-tab>
           
           <!-- Мероприятия, на которые я записан -->
           <mat-tab label="Я участвую">
-            <div class="tab-content">
-              <div class="tab-header">
-                <h2>Мероприятия, на которые я записан</h2>
-                <div class="tab-actions">
-                  <mat-form-field appearance="outline" class="search-field">
-                    <mat-label>Фильтр по статусу</mat-label>
-                    <mat-select [formControl]="participationFilterControl">
-                      <mat-option value="all">Все</mat-option>
-                      <mat-option value="upcoming">Предстоящие</mat-option>
-                      <mat-option value="ongoing">Идущие сейчас</mat-option>
-                      <mat-option value="past">Прошедшие</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
-              
-              <mat-card>
-                <div class="table-container">
-                  <table mat-table [dataSource]="participatedEventsDataSource" matSort class="user-table">
-                    
-                    <!-- Название Column -->
-                    <ng-container matColumnDef="title">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
-                      <td mat-cell *matCellDef="let participation">
-                        <div class="event-title">
-                          {{participation.event.title}}
-                          <span class="event-type">{{getEventTypeText(participation.event.type)}}</span>
-                        </div>
-                        <div class="event-creator">
-                          Организатор: {{participation.event.creator?.username || 'Неизвестно'}}
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Дата Column -->
-                    <ng-container matColumnDef="date">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
-                      <td mat-cell *matCellDef="let participation">
-                        <div class="event-date">
-                          {{formatDate(participation.event.event_date)}}
-                          <div class="event-status" [class]="getEventStatus(participation.event)">
-                            {{getEventStatusText(participation.event)}}
-                          </div>
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Статус участия Column -->
-                    <ng-container matColumnDef="participation_status">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Мой статус</th>
-                      <td mat-cell *matCellDef="let participation">
-                        <mat-chip [color]="getParticipationStatusColor(participation.status)" selected>
-                          {{getParticipationStatusText(participation.status)}}
-                        </mat-chip>
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Записался Column -->
-                    <ng-container matColumnDef="joined_at">
-                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Записался</th>
-                      <td mat-cell *matCellDef="let participation">
-                        {{formatDate(participation.joined_at)}}
-                      </td>
-                    </ng-container>
-                    
-                    <!-- Действия Column -->
-                    <ng-container matColumnDef="actions">
-                      <th mat-header-cell *matHeaderCellDef>Действия</th>
-                      <td mat-cell *matCellDef="let participation">
-                        <div class="action-buttons">
-                          <button mat-icon-button color="primary" 
-                                  (click)="viewEvent(participation.event.id)"
-                                  matTooltip="Просмотреть">
-                            <mat-icon>visibility</mat-icon>
-                          </button>
-                          <button mat-icon-button 
-                                  color="primary"
-                                  (click)="changeParticipationStatus(participation)"
-                                  matTooltip="Изменить статус участия">
-                            <mat-icon>swap_horiz</mat-icon>
-                          </button>
-                          <button mat-icon-button color="warn" 
-                                  (click)="cancelParticipation(participation)"
-                                  [disabled]="!canCancelParticipation(participation)"
-                                  matTooltip="Отменить участие">
-                            <mat-icon>cancel</mat-icon>
-                          </button>
-                        </div>
-                      </td>
-                    </ng-container>
-                    
-                    <tr mat-header-row *matHeaderRowDef="participatedEventsDisplayedColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: participatedEventsDisplayedColumns;"></tr>
-                    
-                    <!-- Сообщение о пустой таблице -->
-                    <tr class="mat-row" *matNoDataRow>
-                      <td class="mat-cell" colspan="5">
-                        <div class="no-data-message">
-                          <mat-icon>group_off</mat-icon>
-                          <p>Вы еще не записались ни на одно мероприятие</p>
-                          <button mat-raised-button color="primary" (click)="goToMap()">
-                            Найти мероприятия на карте
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
+            <ng-template matTabContent>
+              <div class="tab-content">
+                <div class="tab-header">
+                  <h2>Мероприятия, на которые я записан</h2>
+                  <div class="tab-actions">
+                    <mat-form-field appearance="outline" class="search-field">
+                      <mat-label>Фильтр по статусу</mat-label>
+                      <mat-select [formControl]="participationFilterControl">
+                        <mat-option value="all">Все</mat-option>
+                        <mat-option value="upcoming">Предстоящие</mat-option>
+                        <mat-option value="ongoing">Идущие сейчас</mat-option>
+                        <mat-option value="past">Прошедшие</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
                 </div>
                 
-                <mat-paginator [pageSizeOptions]="[5, 10, 25]" 
-                              showFirstLastButtons
-                              aria-label="Select page of events">
-                </mat-paginator>
-              </mat-card>
-            </div>
+                <mat-card>
+                  <div class="table-container">
+                    <table mat-table [dataSource]="participatedEventsDataSource" matSort class="user-table">
+                      
+                      <!-- Название Column -->
+                      <ng-container matColumnDef="title">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
+                        <td mat-cell *matCellDef="let participation">
+                          <div class="event-title">
+                            {{participation.event?.title || participation.title}}
+                            <span class="event-type">{{getEventTypeText(participation.event?.type || participation.type)}}</span>
+                          </div>
+                          <div class="event-creator" *ngIf="participation.event?.creator">
+                            Организатор: {{participation.event.creator.username}}
+                          </div>
+                          <div class="event-creator" *ngIf="!participation.event?.creator && participation.creator_username">
+                            Организатор: {{participation.creator_username}}
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Дата Column -->
+                      <ng-container matColumnDef="date">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
+                        <td mat-cell *matCellDef="let participation">
+                          <div class="event-date">
+                            {{formatDate(participation.event?.event_date || participation.event_date)}}
+                            <div class="event-status" [class]="getEventStatus(participation.event || participation)">
+                              {{getEventStatusText(participation.event || participation)}}
+                            </div>
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Статус участия Column -->
+                      <ng-container matColumnDef="participation_status">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Мой статус</th>
+                        <td mat-cell *matCellDef="let participation">
+                          <mat-chip [color]="getParticipationStatusColor(participation.status)" selected>
+                            {{getParticipationStatusText(participation.status)}}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Записался Column -->
+                      <ng-container matColumnDef="joined_at">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>Записался</th>
+                        <td mat-cell *matCellDef="let participation">
+                          {{formatDate(participation.joined_at)}}
+                        </td>
+                      </ng-container>
+                      
+                      <!-- Действия Column -->
+                      <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef>Действия</th>
+                        <td mat-cell *matCellDef="let participation">
+                          <div class="action-buttons">
+                            <button mat-icon-button color="primary" 
+                                    (click)="viewEvent(participation.event?.id || participation.id)"
+                                    matTooltip="Просмотреть">
+                              <mat-icon>visibility</mat-icon>
+                            </button>
+                            <button mat-icon-button 
+                                    color="primary"
+                                    (click)="changeParticipationStatus(participation)"
+                                    matTooltip="Изменить статус участия">
+                              <mat-icon>swap_horiz</mat-icon>
+                            </button>
+                            <button mat-icon-button color="warn" 
+                                    (click)="cancelParticipation(participation)"
+                                    [disabled]="!canCancelParticipation(participation)"
+                                    matTooltip="Отменить участие">
+                              <mat-icon>cancel</mat-icon>
+                            </button>
+                          </div>
+                        </td>
+                      </ng-container>
+                      
+                      <tr mat-header-row *matHeaderRowDef="participatedEventsDisplayedColumns"></tr>
+                      <tr mat-row *matRowDef="let row; columns: participatedEventsDisplayedColumns;"></tr>
+                      
+                      <!-- Сообщение о пустой таблице -->
+                      <tr class="mat-row" *matNoDataRow>
+                        <td class="mat-cell" colspan="5">
+                          <div class="no-data-message">
+                            <mat-icon>group_off</mat-icon>
+                            <p>Вы еще не записались ни на одно мероприятие</p>
+                            <button mat-raised-button color="primary" (click)="goToMap()">
+                              Найти мероприятия на карте
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                  
+                  <mat-paginator [pageSizeOptions]="[5, 10, 25]" 
+                                showFirstLastButtons
+                                aria-label="Select page of events">
+                  </mat-paginator>
+                </mat-card>
+              </div>
+            </ng-template>
           </mat-tab>
           
           <!-- Профиль -->
           <mat-tab label="Профиль">
-            <div class="tab-content">
-              <mat-card class="profile-card">
-                <mat-card-header>
-                  <mat-card-title>Информация о профиле</mat-card-title>
-                </mat-card-header>
-                <mat-card-content>
-                  <div class="profile-info-grid">
-                    <div class="profile-item">
-                      <span class="profile-label">ID пользователя:</span>
-                      <span class="profile-value">{{authService.getCurrentUser()?.id}}</span>
+            <ng-template matTabContent>
+              <div class="tab-content">
+                <mat-card class="profile-card">
+                  <mat-card-header>
+                    <mat-card-title>Информация о профиле</mat-card-title>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="profile-info-grid">
+                      <div class="profile-item">
+                        <span class="profile-label">ID пользователя:</span>
+                        <span class="profile-value">{{authService.getCurrentUser()?.id}}</span>
+                      </div>
+                      <div class="profile-item">
+                        <span class="profile-label">Имя пользователя:</span>
+                        <span class="profile-value">{{authService.getCurrentUser()?.username}}</span>
+                      </div>
+                      <div class="profile-item">
+                        <span class="profile-label">Email:</span>
+                        <span class="profile-value">{{authService.getCurrentUser()?.email}}</span>
+                      </div>
+                      <div class="profile-item">
+                        <span class="profile-label">Роль:</span>
+                        <span class="profile-value">
+                          <mat-chip [color]="authService.getCurrentUser()?.role === 'admin' ? 'warn' : 'primary'" selected>
+                            {{authService.getCurrentUser()?.role === 'admin' ? 'Администратор' : 'Пользователь'}}
+                          </mat-chip>
+                        </span>
+                      </div>
+                      <div class="profile-item">
+                        <span class="profile-label">Дата регистрации:</span>
+                        <span class="profile-value">{{formatDate(authService.getCurrentUser()?.created_at)}}</span>
+                      </div>
+                      <div class="profile-item">
+                        <span class="profile-label">Последний онлайн:</span>
+                        <span class="profile-value">{{formatDate(authService.getCurrentUser()?.last_online)}}</span>
+                      </div>
                     </div>
-                    <div class="profile-item">
-                      <span class="profile-label">Имя пользователя:</span>
-                      <span class="profile-value">{{authService.getCurrentUser()?.username}}</span>
+                    
+                    <mat-divider></mat-divider>
+                    
+                    <div class="profile-actions">
+                      <button mat-raised-button color="primary" (click)="editProfile()">
+                        <mat-icon>edit</mat-icon>
+                        Редактировать профиль
+                      </button>
+                      <button mat-raised-button color="accent" (click)="changePassword()">
+                        <mat-icon>lock</mat-icon>
+                        Сменить пароль
+                      </button>
                     </div>
-                    <div class="profile-item">
-                      <span class="profile-label">Email:</span>
-                      <span class="profile-value">{{authService.getCurrentUser()?.email}}</span>
-                    </div>
-                    <div class="profile-item">
-                      <span class="profile-label">Роль:</span>
-                      <span class="profile-value">
-                        <mat-chip [color]="authService.getCurrentUser()?.role === 'admin' ? 'warn' : 'primary'" selected>
-                          {{authService.getCurrentUser()?.role === 'admin' ? 'Администратор' : 'Пользователь'}}
-                        </mat-chip>
-                      </span>
-                    </div>
-                    <div class="profile-item">
-                      <span class="profile-label">Дата регистрации:</span>
-                      <span class="profile-value">{{formatDate(authService.getCurrentUser()?.created_at)}}</span>
-                    </div>
-                    <div class="profile-item">
-                      <span class="profile-label">Последний онлайн:</span>
-                      <span class="profile-value">{{formatDate(authService.getCurrentUser()?.last_online)}}</span>
-                    </div>
-                  </div>
-                  
-                  <mat-divider></mat-divider>
-                  
-                  <div class="profile-actions">
-                    <button mat-raised-button color="primary" (click)="editProfile()">
-                      <mat-icon>edit</mat-icon>
-                      Редактировать профиль
-                    </button>
-                    <button mat-raised-button color="accent" (click)="changePassword()">
-                      <mat-icon>lock</mat-icon>
-                      Сменить пароль
-                    </button>
-                  </div>
-                </mat-card-content>
-              </mat-card>
-            </div>
+                  </mat-card-content>
+                </mat-card>
+              </div>
+            </ng-template>
           </mat-tab>
         </mat-tab-group>
       </div>
@@ -849,57 +858,81 @@ export class UserDashboardComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.myEventsDataSource.paginator = this.myEventsPaginator;
+    // Настройка сортировки для таблицы "Мои мероприятия"
     this.myEventsDataSource.sort = this.myEventsSort;
-    
-    this.participatedEventsDataSource.paginator = this.participatedEventsPaginator;
+    this.myEventsDataSource.sortingDataAccessor = (item, property) => {
+        switch (property) {
+            case 'date':
+                return new Date(item.event_date).getTime();
+            case 'participants':
+                return item.participants_count || 0;
+            default:
+                return item[property];
+        }
+    };
+
+    // Настройка сортировки для таблицы "Я участвую"
     this.participatedEventsDataSource.sort = this.participatedEventsSort;
-  }
+    this.participatedEventsDataSource.sortingDataAccessor = (item, property) => {
+        switch (property) {
+            case 'date':
+                return new Date(item.event?.event_date || item.event_date).getTime();
+            case 'joined_at':
+                return new Date(item.joined_at).getTime();
+            default:
+                if (item.event && item.event[property]) {
+                    return item.event[property];
+                }
+                return item[property];
+        }
+    };
+
+    // Устанавливаем пагинаторы
+    this.myEventsDataSource.paginator = this.myEventsPaginator;
+    this.participatedEventsDataSource.paginator = this.participatedEventsPaginator;
+}
 
   loadUserData(): void {
     this.isLoading = true;
     
     // Загрузка статистики
+
     this.http.get<any>('http://localhost:8080/api/user/dashboard').subscribe({
-      next: (data) => {
-        this.stats = data.stats || {};
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Ошибка загрузки статистики:', error);
-        this.isLoading = false;
-      }
+        next: (data) => {
+            this.stats = data.stats || {};
+            this.isLoading = false;
+        },
+        error: (error) => {
+            console.error('Ошибка загрузки статистики:', error);
+            this.isLoading = false;
+        }
     });
     
-    // Загрузка созданных мероприятий
+        // Загрузка созданных мероприятий ТЕКУЩЕГО пользователя
     this.http.get<any[]>('http://localhost:8080/api/user/events').subscribe({
-      next: (events) => {
-        this.myEventsDataSource.data = events.map(event => ({
-          ...event,
-          status: this.calculateEventStatus(event)
-        }));
-      },
-      error: (error) => {
-        console.error('Ошибка загрузки мероприятий:', error);
-      }
+        next: (events) => {
+            console.log('Мои мероприятия загружены:', events);
+            this.myEventsDataSource.data = events.map(event => ({
+                ...event,
+                status: this.calculateEventStatus(event)
+            }));
+            
+            // После загрузки данных обновляем пагинатор и сортировку
+            setTimeout(() => {
+                this.myEventsDataSource.paginator = this.myEventsPaginator;
+                this.myEventsDataSource.sort = this.myEventsSort;
+                this.setupMyEventsFilter();
+            });
+        },
+        error: (error) => {
+            console.error('Ошибка загрузки моих мероприятий:', error);
+            this.snackBar.open('Ошибка загрузки мероприятий', 'Ошибка', { duration: 3000 });
+        }
     });
     
     // Загрузка мероприятий, на которые записан
-    this.http.get<any[]>('http://localhost:8080/api/user/participated').subscribe({
-      next: (participations) => {
-        this.participatedEventsDataSource.data = participations.map(participation => ({
-          ...participation,
-          event: {
-            ...participation.event,
-            status: this.calculateEventStatus(participation.event)
-          }
-        }));
-      },
-      error: (error) => {
-        console.error('Ошибка загрузки участий:', error);
-      }
-    });
-  }
+    this.loadParticipatedEvents();
+}
 
   calculateEventStatus(event: any): string {
     const now = new Date();
@@ -911,6 +944,52 @@ export class UserDashboardComponent implements OnInit, AfterViewInit {
     if (hoursDiff <= 24) return 'ongoing'; // Идет сегодня
     return 'upcoming'; // Предстоящее
   }
+
+  private loadParticipatedEvents(): void {
+    this.http.get<any[]>('http://localhost:8080/api/user/participated').subscribe({
+        next: (participations) => {
+            console.log('Участия загружены:', participations);
+            
+            // Преобразуем данные участия в удобный формат
+            const formattedData = participations.map(participation => {
+                // Проверяем структуру ответа
+                if (participation.event) {
+                    // Если ответ содержит поле event
+                    return {
+                        ...participation,
+                        event: {
+                            ...participation.event,
+                            status: this.calculateEventStatus(participation.event)
+                        }
+                    };
+                } else {
+                    // Если ответ уже содержит данные мероприятия напрямую
+                    return {
+                        event: {
+                            ...participation,
+                            status: this.calculateEventStatus(participation)
+                        },
+                        status: participation.participation_status || 'going',
+                        joined_at: participation.joined_at || participation.created_at
+                    };
+                }
+            });
+            
+            this.participatedEventsDataSource.data = formattedData;
+            
+            // После загрузки данных обновляем пагинатор и сортировку
+            setTimeout(() => {
+                this.participatedEventsDataSource.paginator = this.participatedEventsPaginator;
+                this.participatedEventsDataSource.sort = this.participatedEventsSort;
+                this.setupParticipatedEventsFilter();
+            });
+        },
+        error: (error) => {
+            console.error('Ошибка загрузки участий:', error);
+            this.snackBar.open('Ошибка загрузки мероприятий', 'Ошибка', { duration: 3000 });
+        }
+    });
+}
 
   getEventTypeText(type: string): string {
     return this.eventTypes[type as keyof typeof this.eventTypes] || type;
@@ -941,6 +1020,45 @@ export class UserDashboardComponent implements OnInit, AfterViewInit {
       default: return 'Неизвестно';
     }
   }
+
+  // Настройка фильтрации для таблицы "Мои мероприятия"
+private setupMyEventsFilter(): void {
+    // Фильтр по поиску
+    this.myEventsDataSource.filterPredicate = (data: any, filter: string) => {
+        if (!filter) return true;
+        
+        const searchStr = filter.toLowerCase();
+        return data.title.toLowerCase().includes(searchStr) ||
+               (data.description && data.description.toLowerCase().includes(searchStr));
+    };
+
+    // Подписка на изменения поиска
+    this.myEventsSearchControl.valueChanges.subscribe(value => {
+        this.myEventsDataSource.filter = value?.trim().toLowerCase() || '';
+        if (this.myEventsPaginator) {
+            this.myEventsPaginator.firstPage();
+        }
+    });
+}
+
+// Настройка фильтрации для таблицы "Я участвую"
+private setupParticipatedEventsFilter(): void {
+    // Фильтр по статусу мероприятия
+    this.participatedEventsDataSource.filterPredicate = (data: any, filter: string) => {
+        if (!filter || filter === 'all') return true;
+        
+        const eventStatus = data.event?.status || data.status;
+        return eventStatus === filter;
+    };
+
+    // Подписка на изменения фильтра
+    this.participationFilterControl.valueChanges.subscribe(value => {
+        this.participatedEventsDataSource.filter = value || 'all';
+        if (this.participatedEventsPaginator) {
+            this.participatedEventsPaginator.firstPage();
+        }
+    });
+}
 
   getVerificationColor(event: any): string {
     if (!event.is_verified && event.is_active) return 'primary';
