@@ -1,13 +1,11 @@
+// main-map/main-map.ts
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
-import {NotificationService} from '../notifications/notifications';
-// Измените импорты на:
-import { CreateEventDialogComponent } from '../create-event-dialog/create-event-dialog';
-import { EventDetailsDialogComponent } from '../event-details-dialog/event-details-dialog';
+import { NotificationService } from '../notifications/notifications';
 
 // Angular Material импорты
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -25,8 +23,16 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
-//import { MatChipModule } from '@angular/material/chips';
-import { MatChip, MatChipsModule } from '@angular/material/chips';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatSortModule, MatSort } from '@angular/material/sort';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+
 declare const ymaps: any;
 
 @Component({
@@ -50,8 +56,16 @@ declare const ymaps: any;
     MatNativeDateModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatChipsModule
-],
+    MatChipsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatProgressSpinnerModule,
+    MatTooltipModule,
+    MatCheckboxModule,
+    MatExpansionModule,
+    MatProgressBarModule
+  ],
   template: `
     <div class="main-container">
       <!-- Верхняя панель -->
@@ -87,6 +101,11 @@ declare const ymaps: any;
           </div>
         </mat-menu>
         
+        <!-- Кнопка показа/скрытия таблицы -->
+        <button mat-icon-button (click)="toggleEventsTable()" matTooltip="Список мероприятий">
+          <mat-icon>{{showEventsTable ? 'list' : 'list_alt'}}</mat-icon>
+        </button>
+        
         <!-- Кнопка создания мероприятия -->
         <button mat-raised-button color="accent" (click)="openCreateEventDialog()">
           <mat-icon>add</mat-icon>
@@ -108,7 +127,7 @@ declare const ymaps: any;
           <mat-divider></mat-divider>
           <button mat-menu-item (click)="goToProfile()">
             <mat-icon>person</mat-icon>
-            <span>Мой профиль</span>
+            <span>Личный кабинет</span>
           </button>
           <button mat-menu-item *ngIf="authService.hasRole('admin')" (click)="goToAdmin()">
             <mat-icon>admin_panel_settings</mat-icon>
@@ -124,37 +143,245 @@ declare const ymaps: any;
       <!-- Контейнер для карты -->
       <div id="map" class="map-container"></div>
       
-      <!-- Фильтры событий -->
+      <!-- Панель фильтров -->
       <mat-card class="filters-card">
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Тип мероприятия</mat-label>
-          <mat-select [formControl]="typeFilter" multiple>
-            <mat-option value="concert">🎵 Концерт</mat-option>
-            <mat-option value="exhibition">🖼 Выставка</mat-option>
-            <mat-option value="meetup">👥 Встреча</mat-option>
-            <mat-option value="workshop">🔧 Мастер-класс</mat-option>
-            <mat-option value="sport">⚽ Спорт</mat-option>
-            <mat-option value="festival">🎉 Фестиваль</mat-option>
-          </mat-select>
-        </mat-form-field>
+        <div class="filters-header">
+          <h3>Фильтры мероприятий</h3>
+          <button mat-icon-button (click)="toggleFilters()">
+            <mat-icon>{{showFilters ? 'expand_less' : 'expand_more'}}</mat-icon>
+          </button>
+        </div>
         
-        <mat-form-field appearance="outline" class="filter-field">
-          <mat-label>Дата</mat-label>
-          <input matInput [matDatepicker]="picker" [formControl]="dateFilter">
-          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-          <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
-        
-        <button mat-button color="primary" (click)="applyFilters()">
-          <mat-icon>filter_alt</mat-icon>
-          Применить
-        </button>
-        
-        <button mat-button (click)="resetFilters()">
-          <mat-icon>clear_all</mat-icon>
-          Сбросить
-        </button>
+        <mat-expansion-panel [expanded]="showFilters">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Настройки фильтров
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          
+          <div class="filters-content">
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Тип мероприятия</mat-label>
+              <mat-select [formControl]="typeFilter" multiple>
+                <mat-option value="concert">🎵 Концерт</mat-option>
+                <mat-option value="exhibition">🖼 Выставка</mat-option>
+                <mat-option value="meetup">👥 Встреча</mat-option>
+                <mat-option value="workshop">🔧 Мастер-класс</mat-option>
+                <mat-option value="sport">⚽ Спорт</mat-option>
+                <mat-option value="festival">🎉 Фестиваль</mat-option>
+              </mat-select>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Дата</mat-label>
+              <input matInput [matDatepicker]="picker" [formControl]="dateFilter">
+              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="filter-field">
+              <mat-label>Сортировка</mat-label>
+              <mat-select [formControl]="sortFilter">
+                <mat-option value="date_asc">По дате (сначала новые)</mat-option>
+                <mat-option value="date_desc">По дате (сначала старые)</mat-option>
+                <mat-option value="participants_desc">По участникам (по убыванию)</mat-option>
+                <mat-option value="participants_asc">По участникам (по возрастанию)</mat-option>
+              </mat-select>
+            </mat-form-field>
+            
+            <mat-checkbox [formControl]="showOnlyAvailableFilter">
+              Только с доступными местами
+            </mat-checkbox>
+            
+            <div class="filter-actions">
+              <button mat-button color="primary" (click)="applyFilters()">
+                <mat-icon>filter_alt</mat-icon>
+                Применить
+              </button>
+              
+              <button mat-button (click)="resetFilters()">
+                <mat-icon>clear_all</mat-icon>
+                Сбросить
+              </button>
+            </div>
+          </div>
+        </mat-expansion-panel>
       </mat-card>
+      
+      <!-- Таблица мероприятий -->
+      <div class="events-table-container" [class.hidden]="!showEventsTable">
+        <mat-card class="events-table-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>event</mat-icon>
+              Список мероприятий
+              <span class="events-count">({{eventsDataSource.data.length}})</span>
+            </mat-card-title>
+            <button mat-icon-button (click)="toggleEventsTable()" class="close-table-btn">
+              <mat-icon>close</mat-icon>
+            </button>
+          </mat-card-header>
+          
+          <mat-card-content>
+            <!-- Поиск в таблице -->
+            <div class="table-search">
+              <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Поиск мероприятий</mat-label>
+                <input matInput [formControl]="tableSearchControl" placeholder="Введите название или описание...">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+              
+              <button mat-button (click)="refreshEvents()" [disabled]="isLoading">
+                <mat-icon>refresh</mat-icon>
+                Обновить
+              </button>
+            </div>
+            
+            <!-- Таблица -->
+            <div class="table-wrapper">
+              <table mat-table [dataSource]="eventsDataSource" matSort class="events-table">
+                
+                <!-- Название Column -->
+                <ng-container matColumnDef="title">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
+                  <td mat-cell *matCellDef="let event">
+                    <div class="event-title">
+                      {{event.title}}
+                      <span class="event-type">{{getEventTypeText(event.type)}}</span>
+                    </div>
+                    <div class="event-location" *ngIf="event.location">
+                      <mat-icon class="location-icon">location_on</mat-icon>
+                      {{getDistance(event)}}
+                    </div>
+                  </td>
+                </ng-container>
+                
+                <!-- Дата Column -->
+                <ng-container matColumnDef="date">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
+                  <td mat-cell *matCellDef="let event">
+                    <div class="event-date">
+                      {{formatDate(event.event_date)}}
+                    </div>
+                    <div class="event-time-remaining" [class]="getTimeRemainingClass(event)">
+                      {{getTimeRemaining(event)}}
+                    </div>
+                  </td>
+                </ng-container>
+                
+                <!-- Участники Column -->
+                <ng-container matColumnDef="participants">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Участники</th>
+                  <td mat-cell *matCellDef="let event">
+                    <div class="participants-info">
+                      <div class="participants-count">
+                        <mat-icon>group</mat-icon>
+                        {{event.participants_count || 0}}
+                        <span *ngIf="event.max_participants">/{{event.max_participants}}</span>
+                      </div>
+                      <mat-progress-bar 
+                        *ngIf="event.max_participants"
+                        mode="determinate" 
+                        [value]="(event.participants_count / event.max_participants) * 100"
+                        class="participants-progress">
+                      </mat-progress-bar>
+                      <div *ngIf="isEventFull(event)" class="event-full">
+                        Мест нет
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+                
+                <!-- Статус Column -->
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
+                  <td mat-cell *matCellDef="let event">
+                    <div class="status-cell">
+                      <mat-chip [color]="getEventStatusColor(event)" selected>
+                        {{getEventStatusText(event)}}
+                      </mat-chip>
+                      <div class="verification-status" *ngIf="!event.is_verified">
+                        <mat-icon class="verification-icon">pending</mat-icon>
+                        На верификации
+                      </div>
+                    </div>
+                  </td>
+                </ng-container>
+                
+                <!-- Действия Column -->
+                <ng-container matColumnDef="actions">
+                  <th mat-header-cell *matHeaderCellDef>Действия</th>
+                  <td mat-cell *matCellDef="let event">
+                    <div class="action-buttons">
+                      <button mat-icon-button color="primary" 
+                              (click)="viewEventOnMap(event)"
+                              matTooltip="Показать на карте">
+                        <mat-icon>place</mat-icon>
+                      </button>
+                      
+                      <!-- Кнопка записи/отказа от участия -->
+                      <ng-container *ngIf="!isEventCreator(event)">
+                        <button mat-icon-button 
+                                color="primary"
+                                *ngIf="!isParticipating(event)"
+                                (click)="participateEvent(event)"
+                                [disabled]="isEventFull(event) || !event.is_verified"
+                                matTooltip="Записаться">
+                          <mat-icon>person_add</mat-icon>
+                        </button>
+                        
+                        <button mat-icon-button 
+                                color="warn"
+                                *ngIf="isParticipating(event)"
+                                (click)="cancelParticipation(event)"
+                                matTooltip="Отказаться от участия">
+                          <mat-icon>person_remove</mat-icon>
+                        </button>
+                      </ng-container>
+                      
+                      <!-- Для создателя -->
+                      <ng-container *ngIf="isEventCreator(event)">
+                        <button mat-icon-button color="accent" 
+                                (click)="editEvent(event)"
+                                matTooltip="Редактировать">
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                      </ng-container>
+                    </div>
+                  </td>
+                </ng-container>
+                
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                
+                <!-- Сообщение о загрузке -->
+                <tr *matNoDataRow>
+                  <td class="no-data-cell" colspan="5">
+                    <div *ngIf="isLoading" class="loading-row">
+                      <mat-spinner diameter="30"></mat-spinner>
+                      <span>Загрузка мероприятий...</span>
+                    </div>
+                    <div *ngIf="!isLoading && eventsDataSource.data.length === 0" class="no-data-message">
+                      <mat-icon>event_busy</mat-icon>
+                      <p>Нет мероприятий, соответствующих фильтрам</p>
+                      <button mat-button (click)="resetFilters()">
+                        Сбросить фильтры
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            
+            <!-- Пагинация -->
+            <mat-paginator [pageSizeOptions]="[5, 10, 20]" 
+                          showFirstLastButtons
+                          aria-label="Select page of events"
+                          class="events-paginator">
+            </mat-paginator>
+          </mat-card-content>
+        </mat-card>
+      </div>
     </div>
   `,
   styles: [`
@@ -162,6 +389,8 @@ declare const ymaps: any;
       height: 100vh;
       display: flex;
       flex-direction: column;
+      position: relative;
+      overflow: hidden;
     }
     
     .toolbar {
@@ -169,6 +398,7 @@ declare const ymaps: any;
       justify-content: space-between;
       align-items: center;
       padding: 0 16px;
+      flex-shrink: 0;
     }
     
     .logo {
@@ -194,15 +424,269 @@ declare const ymaps: any;
       position: absolute;
       top: 80px;
       left: 20px;
-      padding: 16px;
       z-index: 1000;
       background: white;
       min-width: 300px;
+      max-width: 400px;
+      transition: transform 0.3s ease;
+    }
+    
+    .filters-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+    }
+    
+    .filters-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .filters-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 16px;
     }
     
     .filter-field {
       width: 100%;
-      margin-bottom: 12px;
+    }
+    
+    .filter-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    
+    .events-table-container {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      bottom: 20px;
+      width: 500px;
+      z-index: 1000;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      transform: translateX(0);
+      opacity: 1;
+    }
+    
+    .events-table-container.hidden {
+      transform: translateX(calc(100% + 20px));
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .events-table-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+    }
+    
+    .events-table-card mat-card-header {
+      background: #3f51b5;
+      color: white;
+      border-radius: 8px 8px 0 0;
+      padding: 16px;
+    }
+    
+    .events-table-card mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    
+    .events-count {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-left: 4px;
+    }
+    
+    .close-table-btn {
+      color: white;
+    }
+    
+    .events-table-card mat-card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .table-search {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .search-field {
+      flex: 1;
+    }
+    
+    .table-wrapper {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px;
+    }
+    
+    .events-table {
+      width: 100%;
+    }
+    
+    .events-table th {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .event-title {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .event-type {
+      font-size: 11px;
+      color: rgba(0, 0, 0, 0.6);
+      margin-left: 8px;
+      background: #e3f2fd;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    
+    .event-location {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .location-icon {
+      font-size: 14px;
+      height: 14px;
+      width: 14px;
+    }
+    
+    .event-date {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .event-time-remaining {
+      font-size: 11px;
+      margin-top: 2px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    
+    .event-time-remaining.upcoming {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    
+    .event-time-remaining.ongoing {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+    
+    .event-time-remaining.past {
+      background: #f5f5f5;
+      color: #616161;
+    }
+    
+    .participants-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .participants-count {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    .participants-progress {
+      height: 4px;
+      border-radius: 2px;
+    }
+    
+    .event-full {
+      font-size: 10px;
+      color: #f44336;
+      font-weight: 500;
+    }
+    
+    .status-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .verification-status {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+    
+    .verification-icon {
+      font-size: 14px;
+      height: 14px;
+      width: 14px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .no-data-cell {
+      text-align: center;
+      padding: 40px !important;
+    }
+    
+    .loading-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+    }
+    
+    .no-data-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      color: rgba(0, 0, 0, 0.54);
+    }
+    
+    .no-data-message mat-icon {
+      font-size: 48px;
+      height: 48px;
+      width: 48px;
+      opacity: 0.5;
+    }
+    
+    .events-paginator {
+      border-top: 1px solid #e0e0e0;
     }
     
     .notifications-header {
@@ -260,88 +744,239 @@ declare const ymaps: any;
       color: rgba(0, 0, 0, 0.6);
       font-size: 14px;
     }
+    
+    @media (max-width: 768px) {
+      .events-table-container {
+        width: calc(100vw - 40px);
+        right: 0;
+        left: 0;
+        margin: 0 auto;
+      }
+      
+      .filters-card {
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        width: calc(100vw - 40px);
+      }
+    }
   `]
 })
 export class MainMapComponent implements OnInit, AfterViewInit {
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild(MatSort) sort!: MatSort;
+
   private map: any;
   private objectManager: any;
+  private userLocation: { lat: number, lng: number } | null = null;
+  
+  // Фильтры
   typeFilter = new FormControl<any[]>([]);
   dateFilter = new FormControl<any>(null);
+  sortFilter = new FormControl<string>('date_desc');
+  showOnlyAvailableFilter = new FormControl<boolean>(false);
+  tableSearchControl = new FormControl<string>('');
+  
+  // Таблица
+  eventsDataSource = new MatTableDataSource<any>([]);
+  displayedColumns = ['title', 'date', 'participants', 'status', 'actions'];
+  
+  // Настройки отображения
+  showEventsTable = true;
+  showFilters = true;
+  
+  // Данные
   notifications: any[] = [];
   unreadNotifications = 0;
+  isLoading = false;
+  userParticipations: Set<number> = new Set();
+  
+  // Типы мероприятий
+  eventTypes = {
+    concert: '🎵 Концерт',
+    exhibition: '🖼 Выставка',
+    meetup: '👥 Встреча',
+    workshop: '🔧 Мастер-класс',
+    sport: '⚽ Спорт',
+    festival: '🎉 Фестиваль',
+    other: '📌 Другое'
+  };
 
   constructor(
     private http: HttpClient,
     private router: Router,
     public authService: AuthService,
     private dialog: MatDialog,
-    private snackBar: MatSnackBar,
-    //private notificationService: NotificationService
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.loadNotifications();
+    this.loadUserParticipations();
     this.loadEvents();
+    
+    // Настройка поиска в таблице
+    this.tableSearchControl.valueChanges.subscribe(value => {
+      this.eventsDataSource.filter = value?.trim().toLowerCase() || '';
+    });
+    
+    // Получение местоположения пользователя
+    this.getUserLocation();
   }
 
   ngAfterViewInit(): void {
-    this.initMap();
+    this.eventsDataSource.paginator = this.paginator;
+    this.eventsDataSource.sort = this.sort;
+    
+    // Настройка сортировки
+    this.eventsDataSource.sortingDataAccessor = (item, property) => {
+      switch (property) {
+        case 'date':
+          return new Date(item.event_date).getTime();
+        case 'participants':
+          return item.participants_count || 0;
+        default:
+          return item[property];
+      }
+    };
   }
 
   private initMap(): void {
-    // Инициализация Яндекс.Карт
-    ymaps.ready(() => {
-      this.map = new ymaps.Map('map', {
-        center: [55.751244, 37.618423], // Москва
-        zoom: 10,
-        controls: ['zoomControl', 'fullscreenControl']
-      });
-
-      // Создаем менеджер объектов для кластеризации
-      this.objectManager = new ymaps.ObjectManager({
-        clusterize: true,
-        gridSize: 64,
-        clusterDisableClickZoom: true,
-        clusterBalloonContentLayout: 'cluster#balloonCarousel'
-      });
-
-      // Обработка клика по кластеру
-      this.objectManager.objects.events.add('click', (event: any) => {
-        const objectId = event.get('objectId');
-        const object = this.objectManager.objects.getById(objectId);
-        
-        if (object) {
-          this.openEventDetails(object.properties.eventId);
-        }
-      });
-
-      // Обработка клика по кластеру
-      this.objectManager.clusters.events.add('click', (event: any) => {
-        const clusterId = event.get('objectId');
-        const cluster = this.objectManager.clusters.getById(clusterId);
-        
-        // Приближаем карту к кластеру
-        this.map.setBounds(cluster.geometry.getBounds(), {
-          checkZoomRange: true
+    if (!this.map) {
+      const center = this.userLocation ? [this.userLocation.lat, this.userLocation.lng] : [55.751244, 37.618423];
+      
+      ymaps.ready(() => {
+        this.map = new ymaps.Map('map', {
+          center: center,
+          zoom: 12,
+          controls: ['zoomControl', 'fullscreenControl']
         });
-      });
 
-      this.map.geoObjects.add(this.objectManager);
-    });
+        this.objectManager = new ymaps.ObjectManager({
+          clusterize: true,
+          gridSize: 64,
+          clusterDisableClickZoom: true,
+          clusterBalloonContentLayout: 'cluster#balloonCarousel'
+        });
+
+        this.objectManager.objects.events.add('click', (event: any) => {
+          const objectId = event.get('objectId');
+          const object = this.objectManager.objects.getById(objectId);
+          
+          if (object) {
+            this.showEventDetails(object.properties.eventId);
+          }
+        });
+
+        this.objectManager.clusters.events.add('click', (event: any) => {
+          const clusterId = event.get('objectId');
+          const cluster = this.objectManager.clusters.getById(clusterId);
+          
+          this.map.setBounds(cluster.geometry.getBounds(), {
+            checkZoomRange: true
+          });
+        });
+
+        this.map.geoObjects.add(this.objectManager);
+      });
+    }
   }
 
-  private loadEvents(): void {
-    this.http.get<any[]>('http://localhost:8080/api/events').subscribe({
+  private getUserLocation(): void {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          this.initMap();
+        },
+        () => {
+          this.initMap();
+        }
+      );
+    } else {
+      this.initMap();
+    }
+  }
+
+  loadEvents(): void {
+    this.isLoading = true;
+    
+    const params: any = {};
+    if (this.typeFilter.value && this.typeFilter.value.length > 0) {
+      params.type = this.typeFilter.value;
+    }
+    if (this.dateFilter.value) {
+      params.date = this.dateFilter.value.toISOString().split('T')[0];
+    }
+
+    this.http.get<any[]>('http://localhost:8080/api/events', { params }).subscribe({
       next: (events) => {
-        this.displayEventsOnMap(events);
+        // Обогащаем события дополнительной информацией
+        const enrichedEvents = events.map(event => ({
+          ...event,
+          isParticipating: this.userParticipations.has(event.id),
+          distance: this.calculateDistance(event),
+          timeStatus: this.getEventTimeStatus(event)
+        }));
+
+        // Сортируем события
+        this.sortEvents(enrichedEvents);
+        
+        // Применяем фильтр по доступности мест
+        let filteredEvents = enrichedEvents;
+        if (this.showOnlyAvailableFilter.value) {
+          filteredEvents = filteredEvents.filter(event => 
+            !event.max_participants || event.participants_count < event.max_participants
+          );
+        }
+
+        this.eventsDataSource.data = filteredEvents;
+        this.displayEventsOnMap(filteredEvents);
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Ошибка загрузки мероприятий:', error);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private sortEvents(events: any[]): void {
+    const sortBy = this.sortFilter.value;
+    
+    switch (sortBy) {
+      case 'date_asc':
+        events.sort((a, b) => new Date(a.event_date).getTime() - new Date(b.event_date).getTime());
+        break;
+      case 'date_desc':
+        events.sort((a, b) => new Date(b.event_date).getTime() - new Date(a.event_date).getTime());
+        break;
+      case 'participants_desc':
+        events.sort((a, b) => (b.participants_count || 0) - (a.participants_count || 0));
+        break;
+      case 'participants_asc':
+        events.sort((a, b) => (a.participants_count || 0) - (b.participants_count || 0));
+        break;
+    }
+  }
+
+  private loadUserParticipations(): void {
+    this.http.get<any[]>('http://localhost:8080/api/user/participated').subscribe({
+      next: (participations) => {
+        this.userParticipations = new Set(participations.map(p => p.event_id || p.event?.id));
+      },
+      error: (error) => {
+        console.error('Ошибка загрузки участий:', error);
       }
     });
   }
 
   private displayEventsOnMap(events: any[]): void {
+    if (!this.objectManager) return;
+
     const features = events.map(event => ({
       type: 'Feature',
       id: event.id,
@@ -351,40 +986,243 @@ export class MainMapComponent implements OnInit, AfterViewInit {
       },
       properties: {
         eventId: event.id,
-        balloonContent: `
-          <div class="event-balloon">
-            <h3>${event.title}</h3>
-            <p>${event.type}</p>
-            <p>${new Date(event.event_date).toLocaleDateString()}</p>
-            <button onclick="window.dispatchEvent(new CustomEvent('openEvent', {detail: ${event.id}}))">
-              Подробнее
-            </button>
-          </div>
-        `
+        title: event.title,
+        type: event.type,
+        date: event.event_date,
+        participants: event.participants_count,
+        balloonContent: this.createBalloonContent(event)
+      },
+      options: {
+        preset: this.getEventPreset(event),
+        iconColor: this.getEventColor(event)
       }
     }));
 
+    this.objectManager.removeAll();
     this.objectManager.add(features);
   }
 
-  openCreateEventDialog(): void {
-    const dialogRef = this.dialog.open(CreateEventDialogComponent, {
-      width: '600px',
-      data: { map: this.map }
-    });
+  private createBalloonContent(event: any): string {
+    return `
+      <div class="event-balloon">
+        <h3>${event.title}</h3>
+        <p><strong>Тип:</strong> ${this.getEventTypeText(event.type)}</p>
+        <p><strong>Дата:</strong> ${this.formatDate(event.event_date)}</p>
+        <p><strong>Участников:</strong> ${event.participants_count || 0}${event.max_participants ? `/${event.max_participants}` : ''}</p>
+        <p><strong>Статус:</strong> ${this.getEventStatusText(event)}</p>
+        <button onclick="window.dispatchEvent(new CustomEvent('openEvent', {detail: ${event.id}}))">
+          Подробнее
+        </button>
+      </div>
+    `;
+  }
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.loadEvents(); // Перезагружаем события
-        this.snackBar.open('Мероприятие создано!', 'OK', { duration: 3000 });
+  private getEventPreset(event: any): string {
+    if (event.isParticipating) return 'islands#blueCircleDotIcon';
+    if (!event.is_verified) return 'islands#grayCircleDotIcon';
+    if (this.isEventFull(event)) return 'islands#redCircleDotIcon';
+    return 'islands#greenCircleDotIcon';
+  }
+
+  private getEventColor(event: any): string {
+    if (event.isParticipating) return '#1976d2';
+    if (!event.is_verified) return '#9e9e9e';
+    if (this.isEventFull(event)) return '#f44336';
+    return '#4caf50';
+  }
+
+  calculateDistance(event: any): number | null {
+    if (!this.userLocation || !event.latitude || !event.longitude) return null;
+    
+    const R = 6371; // Радиус Земли в км
+    const dLat = this.deg2rad(event.latitude - this.userLocation.lat);
+    const dLon = this.deg2rad(event.longitude - this.userLocation.lng);
+    
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(this.userLocation.lat)) * Math.cos(this.deg2rad(event.latitude)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
+
+  getDistance(event: any): string {
+    const distance = this.calculateDistance(event);
+    if (distance === null) return 'Неизвестно';
+    
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)} м`;
+    }
+    return `${distance.toFixed(1)} км`;
+  }
+
+  getEventTimeStatus(event: any): string {
+    const now = new Date();
+    const eventDate = new Date(event.event_date);
+    const diff = eventDate.getTime() - now.getTime();
+    const hoursDiff = diff / (1000 * 60 * 60);
+    
+    if (hoursDiff < 0) return 'past';
+    if (hoursDiff <= 24) return 'ongoing';
+    return 'upcoming';
+  }
+
+  getTimeRemaining(event: any): string {
+    const status = this.getEventTimeStatus(event);
+    const eventDate = new Date(event.event_date);
+    const now = new Date();
+    
+    switch (status) {
+      case 'past':
+        return 'Прошедшее';
+      case 'ongoing':
+        const hoursToEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+        if (hoursToEvent <= 0) return 'Идет сейчас';
+        return `Через ${hoursToEvent} ч`;
+      case 'upcoming':
+        const daysToEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return `Через ${daysToEvent} д`;
+      default:
+        return '';
+    }
+  }
+
+  getTimeRemainingClass(event: any): string {
+    return this.getEventTimeStatus(event);
+  }
+
+  getEventTypeText(type: string): string {
+    return this.eventTypes[type as keyof typeof this.eventTypes] || type;
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  getEventStatusColor(event: any): string {
+    if (!event.is_verified) return 'primary';
+    if (!event.is_active) return 'warn';
+    return 'accent';
+  }
+
+  getEventStatusText(event: any): string {
+    if (!event.is_verified) return 'На верификации';
+    if (!event.is_active) return 'Неактивно';
+    if (this.isEventFull(event)) return 'Заполнено';
+    return 'Активно';
+  }
+
+  isEventFull(event: any): boolean {
+    return event.max_participants && event.participants_count >= event.max_participants;
+  }
+
+  isEventCreator(event: any): boolean {
+    return event.creator_id === this.authService.getCurrentUser()?.id;
+  }
+
+  isParticipating(event: any): boolean {
+    return this.userParticipations.has(event.id);
+  }
+
+  toggleEventsTable(): void {
+    this.showEventsTable = !this.showEventsTable;
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  applyFilters(): void {
+    this.loadEvents();
+  }
+
+  resetFilters(): void {
+    this.typeFilter.setValue([]);
+    this.dateFilter.setValue(null);
+    this.sortFilter.setValue('date_desc');
+    this.showOnlyAvailableFilter.setValue(false);
+    this.tableSearchControl.setValue('');
+    this.loadEvents();
+  }
+
+  refreshEvents(): void {
+    this.loadEvents();
+    this.loadUserParticipations();
+  }
+
+  viewEventOnMap(event: any): void {
+    if (this.map && event.latitude && event.longitude) {
+      this.map.setCenter([event.latitude, event.longitude], 15);
+      this.showEventDetails(event.id);
+    }
+  }
+
+  showEventDetails(eventId: number): void {
+    // Открыть диалог с деталями мероприятия
+    import('../event-details-dialog/event-details-dialog').then(module => {
+      this.dialog.open(module.EventDetailsDialogComponent, {
+        width: '800px',
+        data: { eventId }
+      });
+    });
+  }
+
+  participateEvent(event: any): void {
+    this.http.post(`http://localhost:8080/api/events/${event.id}/participate`, {}).subscribe({
+      next: () => {
+        this.userParticipations.add(event.id);
+        this.loadEvents();
+        this.snackBar.open('Вы записались на мероприятие!', 'OK', { duration: 3000 });
+      },
+      error: (error) => {
+        this.snackBar.open('Ошибка при записи на мероприятие', 'Ошибка', { duration: 3000 });
       }
     });
   }
 
-  openEventDetails(eventId: number): void {
-    this.dialog.open(EventDetailsDialogComponent, {
-      width: '800px',
-      data: { eventId }
+  cancelParticipation(event: any): void {
+    this.http.delete(`http://localhost:8080/api/events/${event.id}/participate`).subscribe({
+      next: () => {
+        this.userParticipations.delete(event.id);
+        this.loadEvents();
+        this.snackBar.open('Вы отказались от участия', 'OK', { duration: 3000 });
+      },
+      error: (error) => {
+        this.snackBar.open('Ошибка при отказе от участия', 'Ошибка', { duration: 3000 });
+      }
+    });
+  }
+
+  editEvent(event: any): void {
+    // Редирект на страницу редактирования или открытие диалога
+    this.router.navigate(['/user/dashboard'], { queryParams: { editEvent: event.id } });
+  }
+
+  openCreateEventDialog(): void {
+    import('../create-event-dialog/create-event-dialog').then(module => {
+      const dialogRef = this.dialog.open(module.CreateEventDialogComponent, {
+        width: '600px',
+        data: { map: this.map }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          this.refreshEvents();
+          this.snackBar.open('Мероприятие создано!', 'OK', { duration: 3000 });
+        }
+      });
     });
   }
 
@@ -417,7 +1255,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   }
 
   goToProfile(): void {
-    this.router.navigate(['/profile']);
+    this.router.navigate(['/user/dashboard']);
   }
 
   goToAdmin(): void {
@@ -426,25 +1264,5 @@ export class MainMapComponent implements OnInit, AfterViewInit {
 
   logout(): void {
     this.authService.logout();
-  }
-
-  applyFilters(): void {
-    const filters = {
-      type: this.typeFilter.value,
-      date: this.dateFilter.value
-    };
-    
-    this.http.post<any[]>('http://localhost:8080/api/events/filter', filters).subscribe({
-      next: (events) => {
-        this.objectManager.removeAll();
-        this.displayEventsOnMap(events);
-      }
-    });
-  }
-
-  resetFilters(): void {
-    this.typeFilter.setValue([]);
-    this.dateFilter.setValue(null);
-    this.loadEvents();
   }
 }

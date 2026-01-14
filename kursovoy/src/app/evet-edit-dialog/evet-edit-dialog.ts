@@ -20,6 +20,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
 import { FormsModule } from '@angular/forms'; // Для ngModel
 
+
 @Component({
   selector: 'app-edit-event-dialog',
   standalone: true,
@@ -325,6 +326,7 @@ export class EditEventDialogComponent implements OnInit {
   profileForm: FormGroup;
   passwordForm: FormGroup;
   selectedParticipationStatus: string = '';
+  event: any;
 
   constructor(
     private fb: FormBuilder,
@@ -335,6 +337,7 @@ export class EditEventDialogComponent implements OnInit {
   ) {
     this.action = data.action || 'editEvent';
     this.selectedParticipationStatus = data.currentStatus || 'going';
+    this.loadEventDetails();
     
     this.eventForm = this.fb.group({
       title: ['', Validators.required],
@@ -443,4 +446,27 @@ export class EditEventDialogComponent implements OnInit {
   onCancel(): void {
     this.dialogRef.close(false);
   }
+
+    loadEventDetails(): void {
+    this.http.get<any>(`http://localhost:8080/api/events/${this.data.eventId}`).subscribe({
+      next: (event) => {
+        this.event = event;
+      },
+      error: (error) => {
+        console.error('Ошибка загрузки мероприятия:', error);
+      }
+    });
+  }
+
+    formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
 }
