@@ -102,20 +102,15 @@ declare const ymaps: any;
           </mat-form-field>
         </div>
 
-        <!-- Карта для отображения найденного местоположения -->
-        <div class="form-row" *ngIf="showMap">
-          <div id="map-container" style="height: 300px; width: 100%; margin-top: 20px;"></div>
-        </div>
-
         <!-- Отображение координат и кнопка ручного выбора -->
         <div class="form-row" *ngIf="selectedLocation">
           <div class="location-info">
             <p><strong>Координаты:</strong> {{selectedLocation.lat.toFixed(6)}}, {{selectedLocation.lng.toFixed(6)}}</p>
             <p><strong>Адрес:</strong> {{selectedLocation.address}}</p>
-            <button mat-button color="primary" (click)="openMapForSelection()">
+            <!-- <button mat-button color="primary" (click)="openMapForSelection()">
               <mat-icon>place</mat-icon>
               Выбрать точку на карте вручную
-            </button>
+            </button> -->
           </div>
         </div>
 
