@@ -913,14 +913,16 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     }
 
     this.http.get<any[]>('http://localhost:8080/api/events', { params }).subscribe({
-      next: (events) => {
-        // Обогащаем события дополнительной информацией
-        const enrichedEvents = events.map(event => ({
-          ...event,
-          isParticipating: this.userParticipations.has(event.id),
-          distance: this.calculateDistance(event),
-          timeStatus: this.getEventTimeStatus(event)
-        }));
+    next: (events) => {
+      // Обогащаем события дополнительной информацией
+      const enrichedEvents = events.map(event => ({
+        ...event,
+        isParticipating: this.userParticipations.has(event.id),
+        distance: this.calculateDistance(event),
+        timeStatus: this.getEventTimeStatus(event),
+        // Форматируем адрес для отображения
+        formattedAddress: this.extractAddressFromLocation(event)
+      }));
 
         // Сортируем события
         this.sortEvents(enrichedEvents);
@@ -943,6 +945,11 @@ export class MainMapComponent implements OnInit, AfterViewInit {
       }
     });
   }
+
+  private extractAddressFromLocation(event: any): string {
+  // Здесь можно добавить обратное геокодирование, если в БД не хранится адрес
+  return `Широта: ${event.latitude.toFixed(4)}, Долгота: ${event.longitude.toFixed(4)}`;
+}
 
   private sortEvents(events: any[]): void {
     const sortBy = this.sortFilter.value;
