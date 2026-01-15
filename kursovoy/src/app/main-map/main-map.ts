@@ -769,6 +769,8 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   private map: any;
   private objectManager: any;
   private userLocation: { lat: number, lng: number } | null = null;
+  private placemarks: any[] = []; // Массив меток
+  private clusterer: any; // Кластеризатор
   
   // Фильтры
   typeFilter = new FormControl<any[]>([]);
@@ -801,6 +803,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     festival: '🎉 Фестиваль',
     other: '📌 Другое'
   };
+  filteredEvents: any;
 
   constructor(
     private http: HttpClient,
@@ -842,44 +845,32 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   }
 
   private initMap(): void {
-    if (!this.map) {
-      const center = this.userLocation ? [this.userLocation.lat, this.userLocation.lng] : [55.751244, 37.618423];
-      
-      ymaps.ready(() => {
-        this.map = new ymaps.Map('map', {
-          center: center,
-          zoom: 12,
-          controls: ['zoomControl', 'fullscreenControl']
-        });
-
-        this.objectManager = new ymaps.ObjectManager({
-          clusterize: true,
-          gridSize: 64,
-          clusterDisableClickZoom: true,
-          clusterBalloonContentLayout: 'cluster#balloonCarousel'
-        });
-
-        this.objectManager.objects.events.add('click', (event: any) => {
-          const objectId = event.get('objectId');
-          const object = this.objectManager.objects.getById(objectId);
-          
-          if (object) {
-            this.showEventDetails(object.properties.eventId);
-          }
-        });
-
-        this.objectManager.clusters.events.add('click', (event: any) => {
-          const clusterId = event.get('objectId');
-          const cluster = this.objectManager.clusters.getById(clusterId);
-          
-          this.map.setBounds(cluster.geometry.getBounds(), {
-            checkZoomRange: true
-          });
-        });
-
-        this.map.geoObjects.add(this.objectManager);
-      });
+    if (typeof ymaps === 'undefined') {
+      console.error('Yandex Maps API не загружена');
+      return;
     }
+
+    ymaps.ready(() => {
+      // Создаем карту по аналогии с примером vanilla.html
+      this.map = new ymaps.Map('map', {
+        center: this.userLocation ? [this.userLocation.lat, this.userLocation.lng] : [55.751244, 37.618423],
+        zoom: 12,
+        controls: ['zoomControl', 'typeSelector', 'fullscreenControl']
+      });
+
+      // Создаем кластеризатор для группировки меток
+      this.clusterer = new ymaps.Clusterer({
+        preset: 'islands#invertedVioletClusterIcons',
+        clusterDisableClickZoom: true,
+        clusterHideIconOnBalloonOpen: false,
+        geoObjectHideIconOnBalloonOpen: false
+      });
+
+      this.map.geoObjects.add(this.clusterer);
+      
+      // Загружаем мероприятия после инициализации карты
+      this.loadEvents();
+    });
   }
 
   private getUserLocation(): void {
@@ -983,65 +974,125 @@ export class MainMapComponent implements OnInit, AfterViewInit {
 
   private displayEventsOnMap(events: any[]): void {
     if (!this.map || !ymaps) return;
+    
+    this.filteredEvents = events;
+    
+    // Очищаем предыдущие метки
+    this.clusterer.removeAll();
+    this.placemarks = [];
 
-    // Удаляем старые метки
-    this.map.geoObjects.removeAll();
-
-    // Создаем ObjectManager для кластеризации
-    this.objectManager = new ymaps.ObjectManager({
-        clusterize: true,
-        gridSize: 64,
-        clusterDisableClickZoom: true
+    // Создаем метки для каждого мероприятия
+    events.forEach(event => {
+      if (event.latitude && event.longitude) {
+        const placemark = this.createPlacemark(event);
+        this.placemarks.push(placemark);
+        this.clusterer.add(placemark);
+      }
     });
 
-    // Добавляем обработчик клика на объекты
-    this.objectManager.objects.events.add('click', (event: any) => {
-        const objectId = event.get('objectId');
-        const object = this.objectManager.objects.getById(objectId);
-        if (object) {
-            this.showEventDetails(object.properties.eventId);
+    // Если есть местоположение пользователя, добавляем свою метку
+    if (this.userLocation) {
+      const userPlacemark = new ymaps.Placemark(
+        [this.userLocation.lat, this.userLocation.lng],
+        {
+          hintContent: 'Ваше местоположение',
+          balloonContent: 'Вы здесь'
+        },
+        {
+          preset: 'islands#greenDotIcon',
+          draggable: false
         }
+      );
+      this.map.geoObjects.add(userPlacemark);
+    }
+  }
+
+  private createPlacemark(event: any): any {
+    // Определяем цвет метки в зависимости от статуса
+    let preset = 'islands#blueDotIcon';
+    if (this.isParticipating(event)) {
+      preset = 'islands#greenDotIcon';
+    } else if (!event.is_verified) {
+      preset = 'islands#grayDotIcon';
+    } else if (this.isEventFull(event)) {
+      preset = 'islands#redDotIcon';
+    }
+
+    // Создаем содержимое балуна
+    const balloonContent = this.createBalloonContent(event);
+
+    const placemark = new ymaps.Placemark(
+      [event.latitude, event.longitude], // Порядок: [широта, долгота][citation:6]
+      {
+        hintContent: event.title,
+        balloonContentHeader: `<strong>${event.title}</strong>`,
+        balloonContentBody: balloonContent.body,
+        balloonContentFooter: balloonContent.footer,
+        // Дополнительные данные для обработки кликов
+        eventId: event.id,
+        eventData: event
+      },
+      {
+        preset: preset,
+        balloonCloseButton: true,
+        hideIconOnBalloonOpen: false,
+        // Можно задать свой цвет иконки
+        iconColor: this.getEventColor(event)
+      }
+    );
+
+    // Обработчик клика на метку
+    placemark.events.add('click', (e: any) => {
+      const target = e.get('target');
+      const eventData = target.properties.get('eventData');
+      this.showEventDetails(eventData.id);
     });
 
-    // Создаем фичи для ObjectManager
-    const features = events.map(event => ({
-        type: 'Feature',
-        id: event.id,
-        geometry: {
-            type: 'Point',
-            coordinates: [event.longitude, event.latitude]
-        },
-        properties: {
-            eventId: event.id,
-            title: event.title,
-            type: event.type,
-            date: event.event_date,
-            participants: event.participants_count || 0,
-            balloonContent: this.createBalloonContent(event)
-        },
-        options: {
-            preset: this.getEventPreset(event),
-            iconColor: this.getEventColor(event)
-        }
-    }));
+    // Обработчик наведения на метку
+    placemark.events.add('mouseenter', (e: any) => {
+      e.get('target').options.set('preset', 'islands#redIcon');
+    });
+    
+    placemark.events.add('mouseleave', (e: any) => {
+      e.get('target').options.set('preset', preset);
+    });
 
-    this.objectManager.add(features);
-    this.map.geoObjects.add(this.objectManager);
-}
+    return placemark;
+  }
 
-private createBalloonContent(event: any): string {
-    return `
-        <div class="event-balloon">
-            <h3>${event.title}</h3>
-            <p><strong>Тип:</strong> ${this.getEventTypeText(event.type)}</p>
-            <p><strong>Дата:</strong> ${this.formatDate(event.event_date)}</p>
-            <p><strong>Участников:</strong> ${event.participants_count || 0}</p>
-            <button onclick="window.dispatchEvent(new CustomEvent('openEvent', {detail: ${event.id}}))">
-                Подробнее
-            </button>
-        </div>
+private createBalloonContent(event: any): any {
+    const participantsText = event.max_participants 
+      ? `${event.participants_count || 0}/${event.max_participants}`
+      : `${event.participants_count || 0}`;
+
+    const body = `
+      <div class="event-balloon">
+        <p><strong>Тип:</strong> ${this.getEventTypeText(event.type)}</p>
+        <p><strong>Дата:</strong> ${this.formatDate(event.event_date)}</p>
+        <p><strong>Участники:</strong> ${participantsText}</p>
+        <p><strong>Цена:</strong> ${event.price > 0 ? event.price + ' ₽' : 'Бесплатно'}</p>
+        ${event.description ? `<p>${event.description.substring(0, 150)}...</p>` : ''}
+      </div>
     `;
-}
+
+    const footer = `
+      <div class="balloon-actions">
+        <button onclick="window.angularComponent?.viewEventDetails(${event.id})" 
+                class="balloon-btn">
+          Подробнее
+        </button>
+        ${!this.isEventCreator(event) ? `
+          <button onclick="window.angularComponent?.participateEvent(${event.id})" 
+                  class="balloon-btn ${this.isParticipating(event) ? 'participating' : ''}"
+                  ${this.isEventFull(event) || !event.is_verified ? 'disabled' : ''}>
+            ${this.isParticipating(event) ? 'Вы участвуете' : 'Я пойду'}
+          </button>
+        ` : ''}
+      </div>
+    `;
+
+    return { body, footer };
+  }
 
   private getEventPreset(event: any): string {
     if (event.isParticipating) return 'islands#blueCircleDotIcon';
@@ -1050,10 +1101,11 @@ private createBalloonContent(event: any): string {
 }
 
   private getEventColor(event: any): string {
-    if (event.isParticipating) return '#1976d2';
-    if (!event.is_verified) return '#9e9e9e';
-    return '#4caf50';
-}
+    if (this.isParticipating(event)) return '#4CAF50';
+    if (!event.is_verified) return '#9E9E9E';
+    if (this.isEventFull(event)) return '#F44336';
+    return '#2196F3';
+  }
 
   calculateDistance(event: any): number | null {
     if (!this.userLocation || !event.latitude || !event.longitude) return null;
@@ -1189,7 +1241,27 @@ private createBalloonContent(event: any): string {
   viewEventOnMap(event: any): void {
     if (this.map && event.latitude && event.longitude) {
       this.map.setCenter([event.latitude, event.longitude], 15);
-      this.showEventDetails(event.id);
+      
+      // Открываем балун у соответствующей метки
+      const placemark = this.placemarks.find(p => 
+        p.properties.get('eventId') === event.id
+      );
+      if (placemark) {
+        placemark.balloon.open();
+      }
+    }
+  }
+
+  // Метод для обновления стиля конкретной метки
+  private updatePlacemarkStyle(eventId: number): void {
+    const placemark = this.placemarks.find(p => 
+      p.properties.get('eventId') === eventId
+    );
+    if (placemark) {
+      const event = this.filteredEvents.find((e: { id: number; }) => e.id === eventId);
+      if (event) {
+        placemark.options.set('preset', this.getEventColor(event));
+      }
     }
   }
 
@@ -1203,11 +1275,12 @@ private createBalloonContent(event: any): string {
     });
   }
 
+   // После участия/отмены участия обновляем метку
   participateEvent(event: any): void {
     this.http.post(`http://localhost:8080/api/events/${event.id}/participate`, {}).subscribe({
       next: () => {
         this.userParticipations.add(event.id);
-        this.loadEvents();
+        this.updatePlacemarkStyle(event.id);
         this.snackBar.open('Вы записались на мероприятие!', 'OK', { duration: 3000 });
       },
       error: (error) => {
