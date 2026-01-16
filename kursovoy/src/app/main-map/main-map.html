@@ -1,316 +1,309 @@
 <div class="main-container">
-      <!-- Верхняя панель -->
-      <mat-toolbar color="primary" class="toolbar">
-        <span class="logo">Маяк</span>
-        
-        <span class="spacer"></span>
-        
-        <!-- Кнопка уведомлений -->
-        <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" class="notification-btn">
-          <mat-icon [matBadge]="unreadNotifications" matBadgeColor="warn">notifications</mat-icon>
+  <!-- Верхняя панель -->
+  <mat-toolbar color="primary" class="toolbar">
+    <span class="logo">Маяк</span>
+    
+    <span class="spacer"></span>
+    
+    <!-- Кнопка уведомлений -->
+    <button mat-icon-button [matMenuTriggerFor]="notificationsMenu" class="notification-btn">
+      <mat-icon [matBadge]="unreadNotifications" matBadgeColor="warn">notifications</mat-icon>
+    </button>
+    <mat-menu #notificationsMenu="matMenu">
+      <div class="notifications-header">
+        <h3>Уведомления</h3>
+        <button mat-icon-button (click)="markAllAsRead()">
+          <mat-icon>done_all</mat-icon>
         </button>
-        <mat-menu #notificationsMenu="matMenu">
-          <div class="notifications-header">
-            <h3>Уведомления</h3>
-            <button mat-icon-button (click)="markAllAsRead()">
-              <mat-icon>done_all</mat-icon>
-            </button>
-          </div>
-          <mat-divider></mat-divider>
-          <div *ngIf="notifications.length === 0" class="no-notifications">
-            <mat-icon>notifications_off</mat-icon>
-            <p>Нет уведомлений</p>
-          </div>
-          <div *ngFor="let notification of notifications" 
-               class="notification-item"
-               [class.unread]="!notification.read">
-            <mat-icon>{{getNotificationIcon(notification.type)}}</mat-icon>
-            <div class="notification-content">
-              <p>{{notification.message}}</p>
-              <small>{{notification.created_at | date:'short'}}</small>
-            </div>
-          </div>
-        </mat-menu>
-        
-        <!-- Кнопка показа/скрытия таблицы -->
-        <button mat-icon-button (click)="toggleEventsTable()" matTooltip="Список мероприятий">
-          <mat-icon>{{showEventsTable ? 'list' : 'list_alt'}}</mat-icon>
-        </button>
-        
-        <!-- Кнопка создания мероприятия -->
-        <button mat-raised-button color="accent" (click)="openCreateEventDialog()">
-          <mat-icon>add</mat-icon>
-          Создать мероприятие
-        </button>
-        
-        <!-- Профиль пользователя -->
-        <button mat-icon-button [matMenuTriggerFor]="profileMenu">
-          <mat-icon>account_circle</mat-icon>
-        </button>
-        <mat-menu #profileMenu="matMenu">
-          <div class="profile-info">
-            <h4>{{authService.getCurrentUser()?.username}}</h4>
-            <p>{{authService.getCurrentUser()?.email}}</p>
-            <mat-chip *ngIf="authService.hasRole('admin')" color="warn" selected>
-              <mat-icon>security</mat-icon> Админ
-            </mat-chip>
-          </div>
-          <mat-divider></mat-divider>
-          <button mat-menu-item (click)="goToProfile()">
-            <mat-icon>person</mat-icon>
-            <span>Личный кабинет</span>
-          </button>
-          <button mat-menu-item *ngIf="authService.hasRole('admin')" (click)="goToAdmin()">
-            <mat-icon>admin_panel_settings</mat-icon>
-            <span>Панель администратора</span>
-          </button>
-          <button mat-menu-item (click)="logout()">
-            <mat-icon>exit_to_app</mat-icon>
-            <span>Выйти</span>
-          </button>
-        </mat-menu>
-      </mat-toolbar>
+      </div>
+      <mat-divider></mat-divider>
+      <div *ngIf="notifications.length === 0" class="no-notifications">
+        <mat-icon>notifications_off</mat-icon>
+        <p>Нет уведомлений</p>
+      </div>
+      <div *ngFor="let notification of notifications" 
+           class="notification-item"
+           [class.unread]="!notification.read">
+        <mat-icon>{{getNotificationIcon(notification.type)}}</mat-icon>
+        <div class="notification-content">
+          <p>{{notification.message}}</p>
+          <small>{{notification.created_at | date:'short'}}</small>
+        </div>
+      </div>
+    </mat-menu>
+    
+    <!-- ЗАКОММЕНТИРОВАНО: Кнопка показа/скрытия таблицы -->
+    <!--
+    <button mat-icon-button (click)="toggleEventsTable()" matTooltip="Список мероприятий">
+      <mat-icon>{{showEventsTable ? 'list' : 'list_alt'}}</mat-icon>
+    </button>
+    -->
+    
+    <!-- Кнопка создания мероприятия -->
+    <button mat-raised-button color="accent" (click)="openCreateEventDialog()">
+      <mat-icon>add</mat-icon>
+      Создать мероприятие
+    </button>
+    
+    <!-- Профиль пользователя -->
+    <button mat-icon-button [matMenuTriggerFor]="profileMenu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    <mat-menu #profileMenu="matMenu">
+      <div class="profile-info">
+        <h4>{{authService.getCurrentUser()?.username}}</h4>
+        <p>{{authService.getCurrentUser()?.email}}</p>
+        <mat-chip *ngIf="authService.hasRole('admin')" color="warn" selected>
+          <mat-icon>security</mat-icon> Админ
+        </mat-chip>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="goToProfile()">
+        <mat-icon>person</mat-icon>
+        <span>Личный кабинет</span>
+      </button>
+      <button mat-menu-item *ngIf="authService.hasRole('admin')" (click)="goToAdmin()">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span>Панель администратора</span>
+      </button>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon>exit_to_app</mat-icon>
+        <span>Выйти</span>
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+  
+  <!-- Контейнер для карты -->
+  <div id="map" class="map-container"></div>
+  
+  <!-- Панель фильтров -->
+  <mat-card class="filters-card">
+    <div class="filters-header">
+      <h3>Фильтры мероприятий</h3>
+      <button mat-icon-button (click)="toggleFilters()">
+        <mat-icon>{{showFilters ? 'expand_less' : 'expand_more'}}</mat-icon>
+      </button>
+    </div>
+    
+    <mat-expansion-panel [expanded]="showFilters">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          Настройки фильтров
+        </mat-panel-title>
+      </mat-expansion-panel-header>
       
-      <!-- Контейнер для карты -->
-      <div id="map" class="map-container"></div>
+      <div class="filters-content">
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Тип мероприятия</mat-label>
+          <mat-select [formControl]="typeFilter" multiple>
+            <mat-option value="concert">🎵 Концерт</mat-option>
+            <mat-option value="exhibition">🖼 Выставка</mat-option>
+            <mat-option value="meetup">👥 Встреча</mat-option>
+            <mat-option value="workshop">🔧 Мастер-класс</mat-option>
+            <mat-option value="sport">⚽ Спорт</mat-option>
+            <mat-option value="festival">🎉 Фестиваль</mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Дата</mat-label>
+          <input matInput [matDatepicker]="picker" [formControl]="dateFilter">
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        
+        <mat-form-field appearance="outline" class="filter-field">
+          <mat-label>Сортировка</mat-label>
+          <mat-select [formControl]="sortFilter">
+            <mat-option value="date_asc">По дате (сначала новые)</mat-option>
+            <mat-option value="date_desc">По дате (сначала старые)</mat-option>
+            <mat-option value="participants_desc">По участникам (по убыванию)</mat-option>
+            <mat-option value="participants_asc">По участникам (по возрастанию)</mat-option>
+          </mat-select>
+        </mat-form-field>
+        
+        <mat-checkbox [formControl]="showOnlyAvailableFilter">
+          Только с доступными местами
+        </mat-checkbox>
+        
+        <div class="filter-actions">
+          <button mat-button color="primary" (click)="applyFilters()">
+            <mat-icon>filter_alt</mat-icon>
+            Применить
+          </button>
+          
+          <button mat-button (click)="resetFilters()">
+            <mat-icon>clear_all</mat-icon>
+            Сбросить
+          </button>
+        </div>
+      </div>
+    </mat-expansion-panel>
+  </mat-card>
+  
+  <!-- ЗАКОММЕНТИРОВАНО: Таблица мероприятий -->
+  <!--
+  <div class="events-table-container" [class.hidden]="!showEventsTable">
+    <mat-card class="events-table-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>event</mat-icon>
+          Список мероприятий
+          <span class="events-count">({{eventsDataSource.data.length}})</span>
+        </mat-card-title>
+        <button mat-icon-button (click)="toggleEventsTable()" class="close-table-btn">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-card-header>
       
-      <!-- Панель фильтров -->
-      <mat-card class="filters-card">
-        <div class="filters-header">
-          <h3>Фильтры мероприятий</h3>
-          <button mat-icon-button (click)="toggleFilters()">
-            <mat-icon>{{showFilters ? 'expand_less' : 'expand_more'}}</mat-icon>
+      <mat-card-content>
+        <div class="table-search">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Поиск мероприятий</mat-label>
+            <input matInput [formControl]="tableSearchControl" placeholder="Введите название или описание...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          
+          <button mat-button (click)="refreshEvents()" [disabled]="isLoading">
+            <mat-icon>refresh</mat-icon>
+            Обновить
           </button>
         </div>
         
-        <mat-expansion-panel [expanded]="showFilters">
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Настройки фильтров
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          
-          <div class="filters-content">
-            <mat-form-field appearance="outline" class="filter-field">
-              <mat-label>Тип мероприятия</mat-label>
-              <mat-select [formControl]="typeFilter" multiple>
-                <mat-option value="concert">🎵 Концерт</mat-option>
-                <mat-option value="exhibition">🖼 Выставка</mat-option>
-                <mat-option value="meetup">👥 Встреча</mat-option>
-                <mat-option value="workshop">🔧 Мастер-класс</mat-option>
-                <mat-option value="sport">⚽ Спорт</mat-option>
-                <mat-option value="festival">🎉 Фестиваль</mat-option>
-              </mat-select>
-            </mat-form-field>
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="eventsDataSource" matSort class="events-table">
             
-            <mat-form-field appearance="outline" class="filter-field">
-              <mat-label>Дата</mat-label>
-              <input matInput [matDatepicker]="picker" [formControl]="dateFilter">
-              <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-              <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
+            <ng-container matColumnDef="title">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="event-title">
+                  {{event.title}}
+                  <span class="event-type">{{getEventTypeText(event.type)}}</span>
+                </div>
+                <div class="event-location" *ngIf="event.location">
+                  <mat-icon class="location-icon">location_on</mat-icon>
+                  {{getDistance(event)}}
+                </div>
+              </td>
+            </ng-container>
             
-            <mat-form-field appearance="outline" class="filter-field">
-              <mat-label>Сортировка</mat-label>
-              <mat-select [formControl]="sortFilter">
-                <mat-option value="date_asc">По дате (сначала новые)</mat-option>
-                <mat-option value="date_desc">По дате (сначала старые)</mat-option>
-                <mat-option value="participants_desc">По участникам (по убыванию)</mat-option>
-                <mat-option value="participants_asc">По участникам (по возрастанию)</mat-option>
-              </mat-select>
-            </mat-form-field>
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="event-date">
+                  {{formatDate(event.event_date)}}
+                </div>
+                <div class="event-time-remaining" [class]="getTimeRemainingClass(event)">
+                  {{getTimeRemaining(event)}}
+                </div>
+              </td>
+            </ng-container>
             
-            <mat-checkbox [formControl]="showOnlyAvailableFilter">
-              Только с доступными местами
-            </mat-checkbox>
+            <ng-container matColumnDef="participants">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Участники</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="participants-info">
+                  <div class="participants-count">
+                    <mat-icon>group</mat-icon>
+                    {{event.participants_count || 0}}
+                    <span *ngIf="event.max_participants">/{{event.max_participants}}</span>
+                  </div>
+                  <mat-progress-bar 
+                    *ngIf="event.max_participants"
+                    mode="determinate" 
+                    [value]="(event.participants_count / event.max_participants) * 100"
+                    class="participants-progress">
+                  </mat-progress-bar>
+                  <div *ngIf="isEventFull(event)" class="event-full">
+                    Мест нет
+                  </div>
+                </div>
+              </td>
+            </ng-container>
             
-            <div class="filter-actions">
-              <button mat-button color="primary" (click)="applyFilters()">
-                <mat-icon>filter_alt</mat-icon>
-                Применить
-              </button>
-              
-              <button mat-button (click)="resetFilters()">
-                <mat-icon>clear_all</mat-icon>
-                Сбросить
-              </button>
-            </div>
-          </div>
-        </mat-expansion-panel>
-      </mat-card>
-      
-      <!-- Таблица мероприятий -->
-      <div class="events-table-container" [class.hidden]="!showEventsTable">
-        <mat-card class="events-table-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>event</mat-icon>
-              Список мероприятий
-              <span class="events-count">({{eventsDataSource.data.length}})</span>
-            </mat-card-title>
-            <button mat-icon-button (click)="toggleEventsTable()" class="close-table-btn">
-              <mat-icon>close</mat-icon>
-            </button>
-          </mat-card-header>
-          
-          <mat-card-content>
-            <!-- Поиск в таблице -->
-            <div class="table-search">
-              <mat-form-field appearance="outline" class="search-field">
-                <mat-label>Поиск мероприятий</mat-label>
-                <input matInput [formControl]="tableSearchControl" placeholder="Введите название или описание...">
-                <mat-icon matSuffix>search</mat-icon>
-              </mat-form-field>
-              
-              <button mat-button (click)="refreshEvents()" [disabled]="isLoading">
-                <mat-icon>refresh</mat-icon>
-                Обновить
-              </button>
-            </div>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="status-cell">
+                  <mat-chip [color]="getEventStatusColor(event)" selected>
+                    {{getEventStatusText(event)}}
+                  </mat-chip>
+                  <div class="verification-status" *ngIf="!event.is_verified">
+                    <mat-icon class="verification-icon">pending</mat-icon>
+                    На верификации
+                  </div>
+                </div>
+              </td>
+            </ng-container>
             
-            <!-- Таблица -->
-            <div class="table-wrapper">
-              <table mat-table [dataSource]="eventsDataSource" matSort class="events-table">
-                
-                <!-- Название Column -->
-                <ng-container matColumnDef="title">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
-                  <td mat-cell *matCellDef="let event">
-                    <div class="event-title">
-                      {{event.title}}
-                      <span class="event-type">{{getEventTypeText(event.type)}}</span>
-                    </div>
-                    <div class="event-location" *ngIf="event.location">
-                      <mat-icon class="location-icon">location_on</mat-icon>
-                      {{getDistance(event)}}
-                    </div>
-                  </td>
-                </ng-container>
-                
-                <!-- Дата Column -->
-                <ng-container matColumnDef="date">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
-                  <td mat-cell *matCellDef="let event">
-                    <div class="event-date">
-                      {{formatDate(event.event_date)}}
-                    </div>
-                    <div class="event-time-remaining" [class]="getTimeRemainingClass(event)">
-                      {{getTimeRemaining(event)}}
-                    </div>
-                  </td>
-                </ng-container>
-                
-                <!-- Участники Column -->
-                <ng-container matColumnDef="participants">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Участники</th>
-                  <td mat-cell *matCellDef="let event">
-                    <div class="participants-info">
-                      <div class="participants-count">
-                        <mat-icon>group</mat-icon>
-                        {{event.participants_count || 0}}
-                        <span *ngIf="event.max_participants">/{{event.max_participants}}</span>
-                      </div>
-                      <mat-progress-bar 
-                        *ngIf="event.max_participants"
-                        mode="determinate" 
-                        [value]="(event.participants_count / event.max_participants) * 100"
-                        class="participants-progress">
-                      </mat-progress-bar>
-                      <div *ngIf="isEventFull(event)" class="event-full">
-                        Мест нет
-                      </div>
-                    </div>
-                  </td>
-                </ng-container>
-                
-                <!-- Статус Column -->
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
-                  <td mat-cell *matCellDef="let event">
-                    <div class="status-cell">
-                      <mat-chip [color]="getEventStatusColor(event)" selected>
-                        {{getEventStatusText(event)}}
-                      </mat-chip>
-                      <div class="verification-status" *ngIf="!event.is_verified">
-                        <mat-icon class="verification-icon">pending</mat-icon>
-                        На верификации
-                      </div>
-                    </div>
-                  </td>
-                </ng-container>
-                
-                <!-- Действия Column -->
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef>Действия</th>
-                  <td mat-cell *matCellDef="let event">
-                    <div class="action-buttons">
-                      <button mat-icon-button color="primary" 
-                              (click)="viewEventOnMap(event)"
-                              matTooltip="Показать на карте">
-                        <mat-icon>place</mat-icon>
-                      </button>
-                      
-                      <!-- Кнопка записи/отказа от участия -->
-                      <ng-container *ngIf="!isEventCreator(event)">
-                        <button mat-icon-button 
-                                color="primary"
-                                *ngIf="!isParticipating(event)"
-                                (click)="participateEvent(event)"
-                                [disabled]="isEventFull(event) || !event.is_verified"
-                                matTooltip="Записаться">
-                          <mat-icon>person_add</mat-icon>
-                        </button>
-                        
-                        <button mat-icon-button 
-                                color="warn"
-                                *ngIf="isParticipating(event)"
-                                (click)="cancelParticipation(event)"
-                                matTooltip="Отказаться от участия">
-                          <mat-icon>person_remove</mat-icon>
-                        </button>
-                      </ng-container>
-                      
-                      <!-- Для создателя -->
-                      <ng-container *ngIf="isEventCreator(event)">
-                        <button mat-icon-button color="accent" 
-                                (click)="editEvent(event)"
-                                matTooltip="Редактировать">
-                          <mat-icon>edit</mat-icon>
-                        </button>
-                      </ng-container>
-                    </div>
-                  </td>
-                </ng-container>
-                
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-                
-                <!-- Сообщение о загрузке -->
-                <tr *matNoDataRow>
-                  <td class="no-data-cell" colspan="5">
-                    <div *ngIf="isLoading" class="loading-row">
-                      <mat-spinner diameter="30"></mat-spinner>
-                      <span>Загрузка мероприятий...</span>
-                    </div>
-                    <div *ngIf="!isLoading && eventsDataSource.data.length === 0" class="no-data-message">
-                      <mat-icon>event_busy</mat-icon>
-                      <p>Нет мероприятий, соответствующих фильтрам</p>
-                      <button mat-button (click)="resetFilters()">
-                        Сбросить фильтры
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </div>
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Действия</th>
+              <td mat-cell *matCellDef="let event">
+                <div class="action-buttons">
+                  <button mat-icon-button color="primary" 
+                          (click)="viewEventOnMap(event)"
+                          matTooltip="Показать на карте">
+                    <mat-icon>place</mat-icon>
+                  </button>
+                  
+                  <ng-container *ngIf="!isEventCreator(event)">
+                    <button mat-icon-button 
+                            color="primary"
+                            *ngIf="!isParticipating(event)"
+                            (click)="participateEvent(event)"
+                            [disabled]="isEventFull(event) || !event.is_verified"
+                            matTooltip="Записаться">
+                      <mat-icon>person_add</mat-icon>
+                    </button>
+                    
+                    <button mat-icon-button 
+                            color="warn"
+                            *ngIf="isParticipating(event)"
+                            (click)="cancelParticipation(event)"
+                            matTooltip="Отказаться от участия">
+                      <mat-icon>person_remove</mat-icon>
+                    </button>
+                  </ng-container>
+                  
+                  <ng-container *ngIf="isEventCreator(event)">
+                    <button mat-icon-button color="accent" 
+                            (click)="editEvent(event)"
+                            matTooltip="Редактировать">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  </ng-container>
+                </div>
+              </td>
+            </ng-container>
             
-            <!-- Пагинация -->
-            <mat-paginator [pageSizeOptions]="[5, 10, 20]" 
-                          showFirstLastButtons
-                          aria-label="Select page of events"
-                          class="events-paginator">
-            </mat-paginator>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </div>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            
+            <tr *matNoDataRow>
+              <td class="no-data-cell" colspan="5">
+                <div *ngIf="isLoading" class="loading-row">
+                  <mat-spinner diameter="30"></mat-spinner>
+                  <span>Загрузка мероприятий...</span>
+                </div>
+                <div *ngIf="!isLoading && eventsDataSource.data.length === 0" class="no-data-message">
+                  <mat-icon>event_busy</mat-icon>
+                  <p>Нет мероприятий, соответствующих фильтрам</p>
+                  <button mat-button (click)="resetFilters()">
+                    Сбросить фильтры
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </div>
+        
+        <mat-paginator [pageSizeOptions]="[5, 10, 20]" 
+                      showFirstLastButtons
+                      aria-label="Select page of events"
+                      class="events-paginator">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  -->
+</div>
