@@ -90,6 +90,23 @@ export class AuthService {
     return currentUser?.role === role;
   }
 
+  // Новые методы
+  refreshToken(): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${this.apiUrl}/refresh-token`, {});
+  }
+
+  requestPasswordReset(email: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/password-reset/request`, { email });
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/password-reset/reset`, { token, newPassword });
+  }
+
+  verifyEmail(token: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/verify-email`, { token });
+  }
+
   private loadCurrentUser(): void {
     if (this.isAuthenticated()) {
       this.getProfile().subscribe({
