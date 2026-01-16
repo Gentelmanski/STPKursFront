@@ -216,12 +216,12 @@ import { AuthService } from '../services/auth';
 
           <div class="event-actions">
             <!-- Кнопка показа на карте -->
-            <button mat-icon-button color="primary" 
+            <!-- <button mat-icon-button color="primary" 
                     (click)="viewEventOnMap()"
                     matTooltip="Показать на карте"
                     class="map-btn">
               <mat-icon>place</mat-icon>
-            </button>
+            </button> -->
             
             <!-- Кнопки для не-создателя -->
             <ng-container *ngIf="!isEventCreator()">
@@ -248,7 +248,7 @@ import { AuthService } from '../services/auth';
               </button>
             </ng-container>
 
-            <!-- Для создателя -->
+            <!-- Для создателя
             <ng-container *ngIf="isEventCreator()">
               <button mat-raised-button color="accent" 
                       (click)="editEvent()"
@@ -257,7 +257,7 @@ import { AuthService } from '../services/auth';
                 <mat-icon>edit</mat-icon>
                 Редактировать
               </button>
-            </ng-container>
+            </ng-container> -->
           </div>
         </div>
       </div>
