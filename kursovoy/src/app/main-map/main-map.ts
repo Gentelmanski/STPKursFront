@@ -67,6 +67,7 @@ declare const ymaps: any;
     MatProgressBarModule
   ],
   template: `
+    <!-- Без изменений в шаблоне -->
     <div class="main-container">
       <!-- Верхняя панель -->
       <mat-toolbar color="primary" class="toolbar">
@@ -385,6 +386,7 @@ declare const ymaps: any;
     </div>
   `,
   styles: [`
+    /* Стили без изменений */
     .main-container {
       height: 100vh;
       display: flex;
@@ -770,7 +772,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   private objectManager: any;
   private userLocation: { lat: number, lng: number } | null = null;
   private placemarks: any[] = []; // Массив меток
-  private clusterer: any; // Кластеризатор
+  private userPlacemark: any; // Метка пользователя
   
   // Фильтры
   typeFilter = new FormControl<any[]>([]);
@@ -851,26 +853,40 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     }
 
     ymaps.ready(() => {
-      // Создаем карту по аналогии с примером vanilla.html
+      // Создаем карту
       this.map = new ymaps.Map('map', {
         center: this.userLocation ? [this.userLocation.lat, this.userLocation.lng] : [55.751244, 37.618423],
         zoom: 12,
         controls: ['zoomControl', 'typeSelector', 'fullscreenControl']
       });
 
-      // Создаем кластеризатор для группировки меток
-      this.clusterer = new ymaps.Clusterer({
-        preset: 'islands#invertedVioletClusterIcons',
-        clusterDisableClickZoom: true,
-        clusterHideIconOnBalloonOpen: false,
-        geoObjectHideIconOnBalloonOpen: false
-      });
+      // Добавляем метку пользователя, если известно местоположение
+      if (this.userLocation) {
+        this.addUserPlacemark();
+      }
 
-      this.map.geoObjects.add(this.clusterer);
-      
       // Загружаем мероприятия после инициализации карты
       this.loadEvents();
     });
+  }
+
+  private addUserPlacemark(): void {
+    if (!this.map || !this.userLocation) return;
+
+    // Создаем метку пользователя
+    this.userPlacemark = new ymaps.Placemark(
+      [this.userLocation.lat, this.userLocation.lng],
+      {
+        hintContent: 'Ваше местоположение',
+        balloonContent: 'Вы здесь'
+      },
+      {
+        preset: 'islands#greenDotIcon',
+        draggable: false
+      }
+    );
+
+    this.map.geoObjects.add(this.userPlacemark);
   }
 
   private getUserLocation(): void {
@@ -904,16 +920,16 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     }
 
     this.http.get<any[]>('http://localhost:8080/api/events', { params }).subscribe({
-    next: (events) => {
-      // Обогащаем события дополнительной информацией
-      const enrichedEvents = events.map(event => ({
-        ...event,
-        isParticipating: this.userParticipations.has(event.id),
-        distance: this.calculateDistance(event),
-        timeStatus: this.getEventTimeStatus(event),
-        // Форматируем адрес для отображения
-        formattedAddress: this.extractAddressFromLocation(event)
-      }));
+      next: (events) => {
+        // Обогащаем события дополнительной информацией
+        const enrichedEvents = events.map(event => ({
+          ...event,
+          isParticipating: this.userParticipations.has(event.id),
+          distance: this.calculateDistance(event),
+          timeStatus: this.getEventTimeStatus(event),
+          // Форматируем адрес для отображения
+          formattedAddress: this.extractAddressFromLocation(event)
+        }));
 
         // Сортируем события
         this.sortEvents(enrichedEvents);
@@ -938,9 +954,9 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   }
 
   private extractAddressFromLocation(event: any): string {
-  // Здесь можно добавить обратное геокодирование, если в БД не хранится адрес
-  return `Широта: ${event.latitude.toFixed(4)}, Долгота: ${event.longitude.toFixed(4)}`;
-}
+    // Здесь можно добавить обратное геокодирование, если в БД не хранится адрес
+    return `Широта: ${event.latitude.toFixed(4)}, Долгота: ${event.longitude.toFixed(4)}`;
+  }
 
   private sortEvents(events: any[]): void {
     const sortBy = this.sortFilter.value;
@@ -977,34 +993,22 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     
     this.filteredEvents = events;
     
-    // Очищаем предыдущие метки
-    this.clusterer.removeAll();
+    // Удаляем старые метки мероприятий с карты
+    this.placemarks.forEach(placemark => {
+      this.map.geoObjects.remove(placemark);
+    });
+    
+    // Очищаем массив меток
     this.placemarks = [];
 
-    // Создаем метки для каждого мероприятия
+    // Создаем новые метки для каждого мероприятия
     events.forEach(event => {
       if (event.latitude && event.longitude) {
         const placemark = this.createPlacemark(event);
         this.placemarks.push(placemark);
-        this.clusterer.add(placemark);
+        this.map.geoObjects.add(placemark);
       }
     });
-
-    // Если есть местоположение пользователя, добавляем свою метку
-    if (this.userLocation) {
-      const userPlacemark = new ymaps.Placemark(
-        [this.userLocation.lat, this.userLocation.lng],
-        {
-          hintContent: 'Ваше местоположение',
-          balloonContent: 'Вы здесь'
-        },
-        {
-          preset: 'islands#greenDotIcon',
-          draggable: false
-        }
-      );
-      this.map.geoObjects.add(userPlacemark);
-    }
   }
 
   private createPlacemark(event: any): any {
@@ -1022,7 +1026,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     const balloonContent = this.createBalloonContent(event);
 
     const placemark = new ymaps.Placemark(
-      [event.latitude, event.longitude], // Порядок: [широта, долгота][citation:6]
+      [event.latitude, event.longitude],
       {
         hintContent: event.title,
         balloonContentHeader: `<strong>${event.title}</strong>`,
@@ -1060,7 +1064,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     return placemark;
   }
 
-private createBalloonContent(event: any): any {
+  private createBalloonContent(event: any): any {
     const participantsText = event.max_participants 
       ? `${event.participants_count || 0}/${event.max_participants}`
       : `${event.participants_count || 0}`;
@@ -1093,12 +1097,6 @@ private createBalloonContent(event: any): any {
 
     return { body, footer };
   }
-
-  private getEventPreset(event: any): string {
-    if (event.isParticipating) return 'islands#blueCircleDotIcon';
-    if (!event.is_verified) return 'islands#grayCircleDotIcon';
-    return 'islands#greenCircleDotIcon';
-}
 
   private getEventColor(event: any): string {
     if (this.isParticipating(event)) return '#4CAF50';
