@@ -1,4 +1,3 @@
-// models/user-event.ts
 export interface UserEvent {
   id: number;
   title: string;

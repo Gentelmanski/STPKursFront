@@ -22,7 +22,7 @@ export function jwtOptionsFactory() {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(withFetch()), // Добавляем withFetch()
+    provideHttpClient(withFetch()),
     importProvidersFrom(
       JwtModule.forRoot({
         jwtOptionsProvider: {

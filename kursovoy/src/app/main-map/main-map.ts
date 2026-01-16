@@ -1,12 +1,9 @@
-// main-map/main-map.ts
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
-
-// Angular Material импорты
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -31,8 +28,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-
-// Импорт компонента диалога
 import { EventDetailsDialogComponent } from '../event-details-dialog/event-details-dialog';
 
 declare const ymaps: any;
@@ -959,7 +954,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   }
 
   private extractAddressFromLocation(event: any): string {
-    // Здесь можно добавить обратное геокодирование, если в БД не хранится адрес
+    // Здесь можно добавить обратное геокодирование
     return `Широта: ${event.latitude.toFixed(4)}, Долгота: ${event.longitude.toFixed(4)}`;
   }
 
@@ -1037,7 +1032,6 @@ export class MainMapComponent implements OnInit, AfterViewInit {
         balloonContentHeader: `<strong>${event.title}</strong>`,
         balloonContentBody: balloonContent.body,
         balloonContentFooter: balloonContent.footer,
-        // Дополнительные данные для обработки кликов
         eventId: event.id,
         eventData: event
       },
@@ -1045,8 +1039,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
         preset: preset,
         balloonCloseButton: true,
         hideIconOnBalloonOpen: false,
-        openBalloonOnClick: false, // Отключаем автоматическое открытие балуна при клике
-        // Можно задать свой цвет иконки
+        openBalloonOnClick: false,
         iconColor: this.getEventColor(event)
       }
     );
@@ -1056,7 +1049,6 @@ export class MainMapComponent implements OnInit, AfterViewInit {
       const target = e.get('target');
       const eventData = target.properties.get('eventData');
       this.showEventDetails(eventData.id);
-      // Закрываем балун если он открыт
       target.balloon.close();
     });
 
@@ -1266,7 +1258,6 @@ export class MainMapComponent implements OnInit, AfterViewInit {
 
   // Метод для открытия диалога с деталями мероприятия
   showEventDetails(eventId: number): void {
-  // Закрываем все открытые балуны перед открытием диалога
   this.placemarks.forEach(placemark => {
     if (placemark.balloon.isOpen()) {
       placemark.balloon.close();

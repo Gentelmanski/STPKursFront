@@ -1,12 +1,9 @@
-// user/dashboard/dashboard.ts
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth';
-import { Router, RouterModule } from '@angular/router'; // Добавлен RouterModule
+import { Router, RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-
-// Angular Material imports
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
@@ -29,9 +26,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatProgressBarModule } from '@angular/material/progress-bar'; // Добавлен
-
-// Компоненты
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { CreateEventDialogComponent } from '../../create-event-dialog/create-event-dialog';
 import { EditEventDialogComponent } from '../../evet-edit-dialog/evet-edit-dialog';
 
@@ -41,7 +36,7 @@ import { EditEventDialogComponent } from '../../evet-edit-dialog/evet-edit-dialo
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterModule, // Добавлен
+    RouterModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
@@ -64,7 +59,7 @@ import { EditEventDialogComponent } from '../../evet-edit-dialog/evet-edit-dialo
     MatTooltipModule,
     MatExpansionModule,
     MatDatepickerModule,
-    MatProgressBarModule // Добавлен
+    MatProgressBarModule 
   ],
   template: `
     <div class="user-dashboard-container">

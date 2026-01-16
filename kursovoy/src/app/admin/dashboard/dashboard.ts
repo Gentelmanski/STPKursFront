@@ -1,11 +1,8 @@
-// admin/dashboard/dashboard.ts
 import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth';
 import { Router } from '@angular/router';
-
-// Angular Material imports
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
@@ -24,12 +21,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
-
-// Components
 import { EventVerificationDialogComponent } from '../event-verification/event-verification';
 import { AdminStatisticsComponent } from '../statistics/statistics';
 import { CommentModerationComponent } from '../comment-moderation/comment-moderation';
-
 import { MatOptionModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -57,9 +51,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatProgressSpinnerModule,
     MatFormFieldModule,
     MatInputModule,
-     MatOptionModule, // Добавьте
-    MatSelectModule, // Добавьте
-    MatTooltipModule, // Добавьте
+     MatOptionModule, 
+    MatSelectModule, 
+    MatTooltipModule,
     AdminStatisticsComponent,
     CommentModerationComponent
   ],

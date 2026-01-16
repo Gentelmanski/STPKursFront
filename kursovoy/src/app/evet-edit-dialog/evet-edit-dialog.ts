@@ -1,4 +1,3 @@
-// edit-event-dialog/edit-event-dialog.ts
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormGroupDirective } from '@angular/forms';
@@ -18,8 +17,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatRadioModule } from '@angular/material/radio';
-import { FormsModule } from '@angular/forms'; // Для ngModel
-
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-edit-event-dialog',
@@ -27,7 +25,7 @@ import { FormsModule } from '@angular/forms'; // Для ngModel
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule, // Добавлен для ngModel
+    FormsModule,
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
@@ -41,7 +39,7 @@ import { FormsModule } from '@angular/forms'; // Для ngModel
     MatNativeDateModule,
     MatSnackBarModule,
     MatCheckboxModule,
-    MatRadioModule // Добавлен для mat-radio-group
+    MatRadioModule
   ],
   template: `
     <div [ngSwitch]="action">

@@ -1,4 +1,3 @@
-// event-details-dialog/event-details-dialog.ts
 import { CommonModule } from '@angular/common';
 import { Component, Inject, OnInit, ChangeDetectorRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';

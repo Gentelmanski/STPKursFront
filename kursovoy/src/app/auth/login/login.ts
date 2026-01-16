@@ -7,8 +7,8 @@ import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  standalone: true, // ← Это standalone компонент
-  imports: [CommonModule, ReactiveFormsModule, RouterModule], // ← Добавьте импорты
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   template: `
     <div class="login-container">
       <div class="login-card">

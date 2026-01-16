@@ -1,4 +1,3 @@
-// create-event-dialog/create-event-dialog.ts
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
@@ -210,7 +209,7 @@ export class CreateEventDialogComponent implements OnInit {
     }
 
     ymaps.ready(() => {
-      // Создаем карту в контейнере (пока скрыта)
+      // Создаем карту в контейнере
       this.map = new ymaps.Map('map-container', {
         center: [55.751244, 37.618423], // Москва
         zoom: 10,

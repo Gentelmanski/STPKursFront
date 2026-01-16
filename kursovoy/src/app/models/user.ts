@@ -13,7 +13,7 @@ export interface RegisterRequest {
     username: string;
     email: string;
     password: string;
-    role: 'user' | 'admin'; // ← Добавьте это поле
+    role: 'user' | 'admin';
 }
 
 export interface LoginRequest {

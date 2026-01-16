@@ -1,9 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { ReactiveFormsModule, FormControl } from '@angular/forms'; // Добавьте этот импорт
-
-// Angular Material imports
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
@@ -16,10 +14,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatOptionModule } from '@angular/material/core'; // Добавьте этот импорт
-import { MatSelectModule } from '@angular/material/select'; // Добавьте этот импорт
-
-// Компонент диалога
+import { MatOptionModule } from '@angular/material/core'; 
+import { MatSelectModule } from '@angular/material/select'; 
 import { EventVerificationDialogComponent } from '../event-verification/event-verification';
 
 @Component({
@@ -27,7 +23,7 @@ import { EventVerificationDialogComponent } from '../event-verification/event-ve
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule, // Добавьте этот модуль
+    ReactiveFormsModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
@@ -40,8 +36,8 @@ import { EventVerificationDialogComponent } from '../event-verification/event-ve
     MatInputModule,
     MatChipsModule,
     MatTooltipModule,
-    MatOptionModule, // Добавьте этот модуль
-    MatSelectModule // Добавьте этот модуль
+    MatOptionModule, 
+    MatSelectModule 
   ],
   template: `
     <div class="comment-moderation">
@@ -297,7 +293,6 @@ export class CommentModerationComponent implements OnInit {
     this.isLoading = true;
     
     // Загрузка комментариев для модерации
-    // Нужен соответствующий эндпоинт на бэкенде
     this.http.get<any[]>('http://localhost:8080/api/admin/comments').subscribe({
       next: (comments) => {
         this.dataSource.data = comments;
@@ -349,7 +344,6 @@ export class CommentModerationComponent implements OnInit {
 
   restoreComment(comment: any): void {
     // Эндпоинт для восстановления комментария
-    // Нужно реализовать на бэкенде
     this.http.put(`http://localhost:8080/api/admin/comments/${comment.id}/restore`, {}).subscribe({
       next: () => {
         this.snackBar.open('Комментарий восстановлен', 'OK', { duration: 3000 });

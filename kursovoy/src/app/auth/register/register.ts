@@ -265,7 +265,7 @@ export class RegisterComponent {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]],
-      role: ['', [Validators.required]] // ← Добавлено поле для выбора роли
+      role: ['', [Validators.required]]
     }, { validators: this.passwordMatchValidator });
   }
 
