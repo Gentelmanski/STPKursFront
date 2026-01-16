@@ -1,131 +1,448 @@
-<div class="dashboard-container">
-  <header class="dashboard-header">
-    <h1>Панель администратора</h1>
-    <div class="user-info">
-      <div class="admin-badge">👑 АДМИНИСТРАТОР</div>
-      <span>{{ authService.getCurrentUser()?.username }}</span>
-      <button (click)="logout()" class="btn-logout">Выйти</button>
-    </div>
-  </header>
-
-  <main class="dashboard-content">
-    <div class="admin-welcome">
-      <h2>Административная панель управления</h2>
-      <p>Здесь вы можете управлять системой и пользователями.</p>
-    </div>
-
-    <div class="admin-stats">
-      <div class="stat-card">
-        <div class="stat-value">125</div>
-        <div class="stat-label">Всего пользователей</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">12</div>
-        <div class="stat-label">Новых сегодня</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">3</div>
-        <div class="stat-label">Администраторов</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">98%</div>
-        <div class="stat-label">Активность системы</div>
-      </div>
-    </div>
-
-    <div class="admin-controls">
-      <h3>Быстрые действия</h3>
-      <div class="controls-grid">
-        <button class="control-btn">
-          <span class="icon">👥</span>
-          Управление пользователями
-        </button>
-        <button class="control-btn">
-          <span class="icon">📊</span>
-          Статистика системы
-        </button>
-        <button class="control-btn">
-          <span class="icon">⚙️</span>
-          Настройки системы
-        </button>
-        <button class="control-btn">
-          <span class="icon">📝</span>
-          Логи и отчеты
-        </button>
-        <button class="control-btn">
-          <span class="icon">🔐</span>
-          Настройки безопасности
-        </button>
-        <button class="control-btn">
-          <span class="icon">🔄</span>
-          Резервное копирование
-        </button>
-      </div>
-    </div>
-
-    <div class="user-management">
-      <h3>Последние пользователи</h3>
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Имя пользователя</th>
-            <th>Email</th>
-            <th>Роль</th>
-            <th>Дата регистрации</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let user of sampleUsers">
-            <td>{{ user.id }}</td>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>
-              <span [class]="'role-badge ' + user.role">
-                {{ user.role === 'admin' ? 'Админ' : 'Пользователь' }}
-              </span>
-            </td>
-            <td>{{ user.created_at | date:'dd.MM.yyyy' }}</td>
-            <td>
-              <button class="action-btn edit">✏️</button>
-              <button class="action-btn delete">🗑️</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="admin-info" *ngIf="authService.getCurrentUser()">
-      <h3>Информация об администраторе:</h3>
-      <div class="info-grid">
-        <div class="info-item">
-          <label>ID администратора:</label>
-          <span>{{ authService.getCurrentUser()?.id }}</span>
+<div class="admin-container">
+      <!-- Верхняя панель -->
+      <mat-toolbar color="primary" class="admin-toolbar">
+        <span class="admin-logo">Админ Панель</span>
+        <span class="spacer"></span>
+        
+        <div class="user-info">
+          <mat-chip color="accent" selected>
+            <mat-icon class="chip-icon">security</mat-icon>
+            АДМИНИСТРАТОР
+          </mat-chip>
+          <span class="username">{{ authService.getCurrentUser()?.username }}</span>
+          <button mat-icon-button [matMenuTriggerFor]="userMenu">
+            <mat-icon>account_circle</mat-icon>
+          </button>
+          <mat-menu #userMenu="matMenu">
+            <button mat-menu-item (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Выйти</span>
+            </button>
+          </mat-menu>
         </div>
-        <div class="info-item">
-          <label>Имя пользователя:</label>
-          <span>{{ authService.getCurrentUser()?.username }}</span>
+      </mat-toolbar>
+
+      <!-- Основное содержимое -->
+      <div class="admin-content">
+        <!-- Статистика -->
+        <div class="stats-section">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Общая статистика</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <app-admin-statistics></app-admin-statistics>
+            </mat-card-content>
+          </mat-card>
         </div>
-        <div class="info-item">
-          <label>Email:</label>
-          <span>{{ authService.getCurrentUser()?.email }}</span>
-        </div>
-        <div class="info-item">
-          <label>Уровень доступа:</label>
-          <span class="admin-role">Администратор</span>
-        </div>
+
+        <!-- Вкладки -->
+        <mat-tab-group class="admin-tabs" animationDuration="0ms">
+          <!-- Мероприятия на верификации -->
+          <mat-tab label="Верификация мероприятий">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Мероприятия на верификации</h2>
+                <div class="tab-actions">
+                  <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Поиск</mat-label>
+                    <input matInput [formControl]="eventSearchControl" placeholder="Поиск мероприятий...">
+                    <mat-icon matSuffix>search</mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <mat-card>
+                <div class="table-container">
+                  <table mat-table [dataSource]="eventsDataSource" matSort class="admin-table">
+                    
+                    <!-- ID Column -->
+                    <ng-container matColumnDef="id">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+                      <td mat-cell *matCellDef="let event">{{event.id}}</td>
+                    </ng-container>
+                    
+                    <!-- Название Column -->
+                    <ng-container matColumnDef="title">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
+                      <td mat-cell *matCellDef="let event">
+                        <div class="event-title">{{event.title}}</div>
+                        <div class="event-type">{{event.type}}</div>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Создатель Column -->
+                    <ng-container matColumnDef="creator">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Создатель</th>
+                      <td mat-cell *matCellDef="let event">
+                        <div class="creator-info">
+                          <div>{{event.creator?.username || event.creator_username}}</div>
+                          <div class="creator-email">{{event.creator?.email || event.creator_email}}</div>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Дата Column -->
+                    <ng-container matColumnDef="date">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата</th>
+                      <td mat-cell *matCellDef="let event">{{formatDate(event.event_date)}}</td>
+                    </ng-container>
+                    
+                    <!-- Участники Column -->
+                    <ng-container matColumnDef="participants">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Участники</th>
+                      <td mat-cell *matCellDef="let event">
+                        <span class="participants-badge">{{event.participants_count || 0}}</span>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Статус Column -->
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
+                      <td mat-cell *matCellDef="let event">
+                        <mat-chip [color]="getEventStatusColor(event)" selected>
+                          {{getEventStatusText(event)}}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Действия Column -->
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef>Действия</th>
+                      <td mat-cell *matCellDef="let event">
+                        <div class="action-buttons">
+                          <button mat-icon-button color="primary" 
+                                  (click)="viewEventDetails(event)"
+                                  matTooltip="Просмотреть детали">
+                            <mat-icon>visibility</mat-icon>
+                          </button>
+                          <button mat-icon-button color="primary" 
+                                  (click)="verifyEvent(event.id)"
+                                  matTooltip="Подтвердить"
+                                  *ngIf="!event.is_verified">
+                            <mat-icon>check_circle</mat-icon>
+                          </button>
+                          <button mat-icon-button color="warn" 
+                                  (click)="rejectEvent(event.id)"
+                                  matTooltip="Отклонить"
+                                  *ngIf="!event.is_verified">
+                            <mat-icon>cancel</mat-icon>
+                          </button>
+                          <button mat-icon-button color="warn" 
+                                  (click)="deleteEvent(event.id)"
+                                  matTooltip="Удалить">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <tr mat-header-row *matHeaderRowDef="eventDisplayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: eventDisplayedColumns;"></tr>
+                    
+                    <!-- Сообщение о пустой таблице -->
+                    <tr class="mat-row" *matNoDataRow>
+                      <td class="mat-cell" colspan="7">
+                        <div class="no-data-message">
+                          <mat-icon>event_busy</mat-icon>
+                          <p>Нет мероприятий для верификации</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" 
+                              showFirstLastButtons
+                              aria-label="Select page of events">
+                </mat-paginator>
+              </mat-card>
+            </div>
+          </mat-tab>
+          
+          <!-- Управление пользователями -->
+          <mat-tab label="Пользователи">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Управление пользователями</h2>
+                <div class="tab-actions">
+                  <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Поиск</mat-label>
+                    <input matInput [formControl]="userSearchControl" placeholder="Поиск пользователей...">
+                    <mat-icon matSuffix>search</mat-icon>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <mat-card>
+                <div class="table-container">
+                  <table mat-table [dataSource]="usersDataSource" matSort class="admin-table">
+                    
+                    <!-- ID Column -->
+                    <ng-container matColumnDef="id">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+                      <td mat-cell *matCellDef="let user">{{user.id}}</td>
+                    </ng-container>
+                    
+                    <!-- Имя пользователя Column -->
+                    <ng-container matColumnDef="username">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Имя пользователя</th>
+                      <td mat-cell *matCellDef="let user">
+                        <div class="user-info">
+                          <div class="username">{{user.username}}</div>
+                          <div class="user-email">{{user.email}}</div>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Роль Column -->
+                    <ng-container matColumnDef="role">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Роль</th>
+                      <td mat-cell *matCellDef="let user">
+                        <mat-chip [color]="user.role === 'admin' ? 'warn' : 'primary'" selected>
+                          {{user.role === 'admin' ? 'Админ' : 'Пользователь'}}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Дата регистрации Column -->
+                    <ng-container matColumnDef="created_at">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата регистрации</th>
+                      <td mat-cell *matCellDef="let user">{{formatDate(user.created_at)}}</td>
+                    </ng-container>
+                    
+                    <!-- Статус Column -->
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
+                      <td mat-cell *matCellDef="let user">
+                        <mat-chip [color]="user.is_blocked ? 'warn' : 'accent'" selected>
+                          {{user.is_blocked ? 'Заблокирован' : 'Активен'}}
+                        </mat-chip>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Статистика Column -->
+                    <ng-container matColumnDef="stats">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Активность</th>
+                      <td mat-cell *matCellDef="let user">
+                        <div class="user-stats">
+                          <span class="stat-item" matTooltip="Создано мероприятий">
+                            <mat-icon>event</mat-icon>
+                            {{user.events_created || 0}}
+                          </span>
+                          <span class="stat-item" matTooltip="Участвует в мероприятиях">
+                            <mat-icon>group</mat-icon>
+                            {{user.events_participated || 0}}
+                          </span>
+                          <span class="stat-item" matTooltip="Комментарии">
+                            <mat-icon>comment</mat-icon>
+                            {{user.comments_count || 0}}
+                          </span>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Действия Column -->
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef>Действия</th>
+                      <td mat-cell *matCellDef="let user">
+                        <div class="action-buttons">
+                          <button mat-icon-button color="primary" 
+                                  (click)="viewUserDetails(user)"
+                                  matTooltip="Просмотреть профиль">
+                            <mat-icon>person</mat-icon>
+                          </button>
+                          <button mat-icon-button color="warn" 
+                                  (click)="toggleUserBlock(user)"
+                                  matTooltip="Блокировка/Разблокировка">
+                            <mat-icon>{{user.is_blocked ? 'lock_open' : 'lock'}}</mat-icon>
+                          </button>
+                          <button mat-icon-button color="warn" 
+                                  (click)="deleteUser(user.id)"
+                                  *ngIf="authService.getCurrentUser()?.id !== user.id"
+                                  matTooltip="Удалить">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <tr mat-header-row *matHeaderRowDef="userDisplayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: userDisplayedColumns;"></tr>
+                    
+                    <!-- Сообщение о пустой таблице -->
+                    <tr class="mat-row" *matNoDataRow>
+                      <td class="mat-cell" colspan="7">
+                        <div class="no-data-message">
+                          <mat-icon>people_outline</mat-icon>
+                          <p>Нет пользователей</p>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" 
+                              showFirstLastButtons
+                              aria-label="Select page of users">
+                </mat-paginator>
+              </mat-card>
+            </div>
+          </mat-tab>
+          
+          <!-- Модерация комментариев -->
+          <mat-tab label="Комментарии">
+            <div class="tab-content">
+              <app-comment-moderation></app-comment-moderation>
+            </div>
+          </mat-tab>
+          
+          <!-- Все мероприятия -->
+          <mat-tab label="Все мероприятия">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Все мероприятия</h2>
+                <div class="tab-actions">
+                  <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Фильтр по статусу</mat-label>
+                    <mat-select [formControl]="eventFilterControl">
+                      <mat-option value="all">Все</mat-option>
+                      <mat-option value="pending">На верификации</mat-option>
+                      <mat-option value="verified">Подтвержденные</mat-option>
+                      <mat-option value="rejected">Отклоненные</mat-option>
+                      <mat-option value="inactive">Неактивные</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              
+              <mat-card>
+                <div class="table-container">
+                  <table mat-table [dataSource]="allEventsDataSource" matSort class="admin-table">
+                    
+                    <!-- ID Column -->
+                    <ng-container matColumnDef="id">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+                      <td mat-cell *matCellDef="let event">{{event.id}}</td>
+                    </ng-container>
+                    
+                    <!-- Название Column -->
+                    <ng-container matColumnDef="title">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Название</th>
+                      <td mat-cell *matCellDef="let event">
+                        <div class="event-title">{{event.title}}</div>
+                        <div class="event-type">{{getEventTypeText(event.type)}}</div>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Создатель Column -->
+                    <ng-container matColumnDef="creator">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Создатель</th>
+                      <td mat-cell *matCellDef="let event">
+                        {{event.creator?.username || 'Неизвестно'}}
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Дата мероприятия Column -->
+                    <ng-container matColumnDef="event_date">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Дата мероприятия</th>
+                      <td mat-cell *matCellDef="let event">{{formatDate(event.event_date)}}</td>
+                    </ng-container>
+                    
+                    <!-- Создано Column -->
+                    <ng-container matColumnDef="created_at">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Создано</th>
+                      <td mat-cell *matCellDef="let event">{{formatDate(event.created_at)}}</td>
+                    </ng-container>
+                    
+                    <!-- Статус Column -->
+                    <ng-container matColumnDef="status">
+                      <th mat-header-cell *matHeaderCellDef mat-sort-header>Статус</th>
+                      <td mat-cell *matCellDef="let event">
+                        <div class="status-cell">
+                          <mat-chip [color]="getEventStatusColor(event)" selected>
+                            {{getEventStatusText(event)}}
+                          </mat-chip>
+                          <div class="status-details">
+                            <span class="detail-item" *ngIf="!event.is_active">
+                              <mat-icon>visibility_off</mat-icon> Неактивно
+                            </span>
+                            <span class="detail-item" *ngIf="!event.is_verified">
+                              <mat-icon>pending</mat-icon> Не верифицировано
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <!-- Действия Column -->
+                    <ng-container matColumnDef="actions">
+                      <th mat-header-cell *matHeaderCellDef>Действия</th>
+                      <td mat-cell *matCellDef="let event">
+                        <div class="action-buttons">
+                          <button mat-icon-button color="primary" 
+                                  (click)="viewEventDetails(event)"
+                                  matTooltip="Просмотреть">
+                            <mat-icon>visibility</mat-icon>
+                          </button>
+                          <button mat-icon-button color="primary" 
+                                  (click)="toggleEventVerification(event)"
+                                  matTooltip="Изменить статус верификации">
+                            <mat-icon>{{event.is_verified ? 'verified' : 'pending'}}</mat-icon>
+                          </button>
+                          <button mat-icon-button color="warn" 
+                                  (click)="toggleEventActivity(event)"
+                                  matTooltip="Активировать/Деактивировать">
+                            <mat-icon>{{event.is_active ? 'toggle_on' : 'toggle_off'}}</mat-icon>
+                          </button>
+                          <button mat-icon-button color="warn" 
+                                  (click)="deleteEvent(event.id)"
+                                  matTooltip="Удалить">
+                            <mat-icon>delete</mat-icon>
+                          </button>
+                        </div>
+                      </td>
+                    </ng-container>
+                    
+                    <tr mat-header-row *matHeaderRowDef="allEventsDisplayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: allEventsDisplayedColumns;"></tr>
+                  </table>
+                </div>
+                
+                <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" 
+                              showFirstLastButtons
+                              aria-label="Select page of all events">
+                </mat-paginator>
+              </mat-card>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
       </div>
+      
+      <!-- Информация о текущем администраторе -->
+      <mat-card class="admin-info-card">
+        <mat-card-header>
+          <mat-card-title>Информация об администраторе</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">ID:</span>
+              <span class="info-value">{{authService.getCurrentUser()?.id}}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Имя пользователя:</span>
+              <span class="info-value">{{authService.getCurrentUser()?.username}}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email:</span>
+              <span class="info-value">{{authService.getCurrentUser()?.email}}</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Роль:</span>
+              <span class="info-value admin-badge">Администратор</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
-
-    <div class="api-response" *ngIf="dashboardData">
-      <h3>Ответ от сервера (админ):</h3>
-      <pre>{{ dashboardData | json }}</pre>
-    </div>
-
-    <div class="loading" *ngIf="isLoading">
-      <div class="spinner"></div>
-      <p>Загрузка данных администратора...</p>
-    </div>
-  </main>
-</div>

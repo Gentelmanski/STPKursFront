@@ -1,0 +1,56 @@
+.form-row {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 16px;
+    }
+    
+    .full-width {
+      width: 100%;
+    }
+    
+    .half-width {
+      flex: 1;
+    }
+    
+    .status-options {
+      margin: 20px 0;
+    }
+    
+    .status-option {
+      display: block;
+      margin: 10px 0;
+    }
+    
+    .status-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+    }
+    
+    .status-icon {
+      font-size: 24px;
+      height: 24px;
+      width: 24px;
+    }
+    
+    .status-icon.going {
+      color: #4caf50;
+    }
+    
+    .status-icon.maybe {
+      color: #ff9800;
+    }
+    
+    .status-icon.declined {
+      color: #f44336;
+    }
+    
+    .status-title {
+      font-weight: 500;
+    }
+    
+    .status-description {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+    }

@@ -1,1 +1,74 @@
-<p>statistics works!</p>
+<div class="stats-container">
+      <mat-grid-list cols="4" rowHeight="100px" gutterSize="16px">
+        <!-- Общая статистика -->
+        <mat-grid-tile *ngFor="let stat of mainStats" [colspan]="1" [rowspan]="1">
+          <mat-card class="stat-card">
+            <mat-card-content>
+              <div class="stat-content">
+                <mat-icon class="stat-icon">{{stat.icon}}</mat-icon>
+                <div class="stat-info">
+                  <div class="stat-value">{{stat.value}}</div>
+                  <div class="stat-label">{{stat.label}}</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </mat-grid-tile>
+        
+        <!-- Топ мероприятий -->
+        <mat-grid-tile [colspan]="2" [rowspan]="2">
+          <mat-card class="top-events-card">
+            <mat-card-header>
+              <mat-card-title>Топ мероприятий</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="top-events-list">
+                <div *ngFor="let event of topEvents" class="event-item">
+                  <div class="event-info">
+                    <div class="event-title">{{event.title}}</div>
+                    <div class="event-stats">
+                      <span class="participants">
+                        <mat-icon>group</mat-icon>
+                        {{event.participants}}
+                      </span>
+                    </div>
+                  </div>
+                  <mat-chip color="primary" class="event-rank">
+                    {{event.participants}}
+                  </mat-chip>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </mat-grid-tile>
+        
+        <!-- Активность системы -->
+        <mat-grid-tile [colspan]="2" [rowspan]="1">
+          <mat-card class="activity-card">
+            <mat-card-header>
+              <mat-card-title>Активность системы</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="activity-stats">
+                <div class="activity-item">
+                  <div class="activity-label">Регистраций сегодня</div>
+                  <div class="activity-value">{{stats?.today_registrations || 0}}</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-label">Пользователей онлайн</div>
+                  <div class="activity-value">{{stats?.online_users || 0}}</div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-label">Мероприятий на верификации</div>
+                  <div class="activity-value">{{pendingEventsCount}}</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </mat-grid-tile>
+      </mat-grid-list>
+      
+      <div *ngIf="isLoading" class="loading">
+        <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+      </div>
+    </div>

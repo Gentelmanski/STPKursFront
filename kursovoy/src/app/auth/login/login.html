@@ -1,51 +1,61 @@
 <div class="login-container">
-  <div class="login-card">
-    <h2>Вход в систему</h2>
-    
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input 
-          type="email" 
-          id="email" 
-          formControlName="email" 
-          placeholder="Введите email"
-          class="form-control"
-        >
-        <div class="error" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
-          Введите корректный email
+      <div class="login-card">
+        <h2>Вход в систему</h2>
+        
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input 
+              type="email" 
+              id="email" 
+              formControlName="email" 
+              placeholder="Введите email"
+              class="form-control"
+            >
+            @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+              <div class="error">
+                Введите корректный email
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input 
+              type="password" 
+              id="password" 
+              formControlName="password" 
+              placeholder="Введите пароль"
+              class="form-control"
+            >
+            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+              <div class="error">
+                Пароль должен содержать минимум 6 символов
+              </div>
+            }
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn btn-primary"
+            [disabled]="loginForm.invalid || isLoading"
+          >
+            @if (isLoading) {
+              Вход...
+            } @else {
+              Войти
+            }
+          </button>
+
+          @if (errorMessage) {
+            <div class="error-message">
+              {{ errorMessage }}
+            </div>
+          }
+        </form>
+
+        <div class="register-link">
+          Нет аккаунта? <a routerLink="/register">Зарегистрируйтесь</a>
         </div>
       </div>
-
-      <div class="form-group">
-        <label for="password">Пароль:</label>
-        <input 
-          type="password" 
-          id="password" 
-          formControlName="password" 
-          placeholder="Введите пароль"
-          class="form-control"
-        >
-        <div class="error" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-          Пароль должен содержать минимум 6 символов
-        </div>
-      </div>
-
-      <button 
-        type="submit" 
-        class="btn btn-primary"
-        [disabled]="loginForm.invalid || isLoading"
-      >
-        {{ isLoading ? 'Вход...' : 'Войти' }}
-      </button>
-
-      <div class="error-message" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
-    </form>
-
-    <div class="register-link">
-      Нет аккаунта? <a routerLink="/register">Зарегистрируйтесь</a>
     </div>
-  </div>
-</div>
