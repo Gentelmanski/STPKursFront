@@ -12,6 +12,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { AuthService } from '../services/auth';
 
 @Component({
@@ -28,7 +29,8 @@ import { AuthService } from '../services/auth';
     MatProgressBarModule,
     MatSnackBarModule,
     MatExpansionModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTooltipModule
   ],
   template: `
     <div class="event-details-container">
@@ -54,9 +56,9 @@ import { AuthService } from '../services/auth';
         <div *ngIf="!isLoading && event" class="content">
           <!-- Статус мероприятия -->
           <div class="status-section">
-            <mat-chip [color]="getStatusColor()" selected class="status-chip">
-              <mat-icon>{{getStatusIcon()}}</mat-icon>
-              {{getStatusText()}}
+            <mat-chip [color]="getEventStatusColor()" selected class="status-chip">
+              <mat-icon>{{getEventStatusIcon()}}</mat-icon>
+              {{getEventStatusText()}}
             </mat-chip>
             
             <span class="event-type">{{getEventTypeText()}}</span>
@@ -74,6 +76,9 @@ import { AuthService } from '../services/auth';
               <div class="info-content">
                 <strong>Дата и время:</strong>
                 <span>{{formatDate(event?.event_date)}}</span>
+                <small [class]="getTimeRemainingClass()">
+                  {{getTimeRemaining()}}
+                </small>
               </div>
             </div>
 
@@ -111,12 +116,11 @@ import { AuthService } from '../services/auth';
               <mat-card-title>
                 <mat-icon>group</mat-icon>
                 Участники
+                <span class="participants-count">
+                  {{event?.participants_count || 0}}
+                  <span *ngIf="event?.max_participants">/{{event.max_participants}}</span>
+                </span>
               </mat-card-title>
-              <mat-card-subtitle>
-                {{event?.participants_count || 0}}
-                <span *ngIf="event?.max_participants">/{{event.max_participants}}</span>
-                мест
-              </mat-card-subtitle>
             </mat-card-header>
 
             <mat-card-content>
@@ -128,9 +132,19 @@ import { AuthService } from '../services/auth';
                 class="participants-progress">
               </mat-progress-bar>
 
-              <div *ngIf="isEventFull()" class="event-full-warning">
-                <mat-icon>info</mat-icon>
-                <span>Мероприятие заполнено</span>
+              <div class="participants-status">
+                <div *ngIf="isEventFull()" class="event-full-warning">
+                  <mat-icon>info</mat-icon>
+                  <span>Мероприятие заполнено</span>
+                </div>
+                <div *ngIf="isEventCreator()" class="creator-badge">
+                  <mat-icon>star</mat-icon>
+                  <span>Вы организатор</span>
+                </div>
+                <div *ngIf="isParticipating()" class="participating-badge">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Вы участник</span>
+                </div>
               </div>
             </mat-card-content>
           </mat-card>
@@ -200,37 +214,57 @@ import { AuthService } from '../services/auth';
             Закрыть
           </button>
 
-          <!-- Кнопки для не-создателя -->
-          <ng-container *ngIf="!isEventCreator()">
-            <button mat-raised-button 
-                    color="primary"
-                    *ngIf="!isParticipating()"
-                    (click)="participate()"
-                    [disabled]="isEventFull() || !event?.is_verified || actionLoading"
-                    class="participate-btn">
-              <mat-icon>person_add</mat-icon>
-              Записаться
+          <div class="event-actions">
+            <!-- Кнопка показа на карте -->
+            <button mat-icon-button color="primary" 
+                    (click)="viewEventOnMap()"
+                    matTooltip="Показать на карте"
+                    class="map-btn">
+              <mat-icon>place</mat-icon>
             </button>
             
-            <button mat-raised-button 
-                    color="warn"
-                    *ngIf="isParticipating()"
-                    (click)="cancelParticipation()"
-                    [disabled]="actionLoading"
-                    class="cancel-btn">
-              <mat-icon>person_remove</mat-icon>
-              Отказаться от участия
-            </button>
-          </ng-container>
+            <!-- Кнопки для не-создателя -->
+            <ng-container *ngIf="!isEventCreator()">
+              <button mat-raised-button 
+                      color="primary"
+                      *ngIf="!isParticipating()"
+                      (click)="participate()"
+                      [disabled]="isEventFull() || !event?.is_verified || actionLoading"
+                      matTooltip="Записаться на мероприятие"
+                      class="participate-btn">
+                <mat-icon>person_add</mat-icon>
+                Записаться
+              </button>
+              
+              <button mat-raised-button 
+                      color="warn"
+                      *ngIf="isParticipating()"
+                      (click)="cancelParticipation()"
+                      [disabled]="actionLoading"
+                      matTooltip="Отказаться от участия"
+                      class="cancel-btn">
+                <mat-icon>person_remove</mat-icon>
+                Отказаться от участия
+              </button>
+            </ng-container>
 
-          <!-- Для создателя -->
-          <ng-container *ngIf="isEventCreator()">
-            <button mat-raised-button color="accent" (click)="editEvent()" class="edit-btn">
-              <mat-icon>edit</mat-icon>
-              Редактировать
-            </button>
-          </ng-container>
+            <!-- Для создателя -->
+            <ng-container *ngIf="isEventCreator()">
+              <button mat-raised-button color="accent" 
+                      (click)="editEvent()"
+                      matTooltip="Редактировать мероприятие"
+                      class="edit-btn">
+                <mat-icon>edit</mat-icon>
+                Редактировать
+              </button>
+            </ng-container>
+          </div>
         </div>
+      </div>
+
+      <!-- Индикатор загрузки действия -->
+      <div *ngIf="actionLoading" class="action-loading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
     </div>
   `,
@@ -376,8 +410,27 @@ import { AuthService } from '../services/auth';
     }
 
     .info-content small {
-      color: #666;
       font-size: 12px;
+      margin-top: 2px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .info-content small.upcoming {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .info-content small.ongoing {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+
+    .info-content small.past {
+      background: #f5f5f5;
+      color: #616161;
     }
 
     .participants-card {
@@ -395,10 +448,11 @@ import { AuthService } from '../services/auth';
       font-size: 18px;
     }
 
-    .participants-card mat-card-subtitle {
+    .participants-count {
       font-size: 16px;
       font-weight: 500;
       color: #333;
+      margin-left: 8px;
     }
 
     .participants-progress {
@@ -407,13 +461,44 @@ import { AuthService } from '../services/auth';
       margin-top: 8px;
     }
 
+    .participants-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
     .event-full-warning {
       display: flex;
       align-items: center;
       gap: 8px;
       color: #f44336;
-      margin-top: 12px;
       font-weight: 500;
+      background: #ffebee;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+
+    .creator-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #ff9800;
+      font-weight: 500;
+      background: #fff3e0;
+      padding: 6px 12px;
+      border-radius: 4px;
+    }
+
+    .participating-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #4caf50;
+      font-weight: 500;
+      background: #e8f5e9;
+      padding: 6px 12px;
+      border-radius: 4px;
     }
 
     .description-panel {
@@ -503,12 +588,29 @@ import { AuthService } from '../services/auth';
       width: 100%;
     }
 
+    .event-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .map-btn {
+      margin-right: 8px;
+    }
+
     .participate-btn,
     .cancel-btn,
     .edit-btn {
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .action-loading {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
     }
 
     /* Стили для скроллбара */
@@ -542,6 +644,7 @@ export class EventDetailsDialogComponent implements OnInit {
   actionLoading = false;
   loadError: string = '';
   userParticipations: Set<number> = new Set();
+  userLocation: { lat: number, lng: number } | null = null;
 
   eventTypes = {
     concert: '🎵 Концерт',
@@ -559,24 +662,25 @@ export class EventDetailsDialogComponent implements OnInit {
     private snackBar: MatSnackBar,
     private authService: AuthService,
     private cdr: ChangeDetectorRef,
-    @Inject(MAT_DIALOG_DATA) public data: { eventId: number }
+    @Inject(MAT_DIALOG_DATA) public data: { eventId: number, map?: any }
   ) {}
 
   ngOnInit(): void {
     this.loadEventDetails();
     this.loadUserParticipations();
+    this.getUserLocation();
   }
 
   loadEventDetails(): void {
     this.isLoading = true;
     this.loadError = '';
-    this.cdr.markForCheck(); // Помечаем для проверки изменений
+    this.cdr.markForCheck();
 
     this.http.get<any>(`http://localhost:8080/api/events/${this.data.eventId}`).subscribe({
       next: (event) => {
         this.event = event;
         this.isLoading = false;
-        this.cdr.detectChanges(); // Принудительно запускаем обнаружение изменений
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Ошибка загрузки мероприятия:', error);
@@ -592,12 +696,95 @@ export class EventDetailsDialogComponent implements OnInit {
     this.http.get<any[]>('http://localhost:8080/api/user/participated').subscribe({
       next: (participations) => {
         this.userParticipations = new Set(participations.map(p => p.event_id || p.event?.id));
-        this.cdr.markForCheck(); // Помечаем для проверки изменений
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Ошибка загрузки участий:', error);
       }
     });
+  }
+
+  getUserLocation(): void {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.userLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+        },
+        () => {
+          this.userLocation = null;
+        }
+      );
+    }
+  }
+
+  calculateDistance(): number | null {
+    if (!this.userLocation || !this.event?.latitude || !this.event?.longitude) return null;
+    
+    const R = 6371; // Радиус Земли в км
+    const dLat = this.deg2rad(this.event.latitude - this.userLocation.lat);
+    const dLon = this.deg2rad(this.event.longitude - this.userLocation.lng);
+    
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(this.userLocation.lat)) * Math.cos(this.deg2rad(this.event.latitude)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
+
+  getDistance(): string {
+    const distance = this.calculateDistance();
+    if (distance === null) return 'Неизвестно';
+    
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)} м`;
+    }
+    return `${distance.toFixed(1)} км`;
+  }
+
+  getEventTimeStatus(): string {
+    if (!this.event?.event_date) return 'past';
+    const now = new Date();
+    const eventDate = new Date(this.event.event_date);
+    const diff = eventDate.getTime() - now.getTime();
+    const hoursDiff = diff / (1000 * 60 * 60);
+    
+    if (hoursDiff < 0) return 'past';
+    if (hoursDiff <= 24) return 'ongoing';
+    return 'upcoming';
+  }
+
+  getTimeRemaining(): string {
+    const status = this.getEventTimeStatus();
+    if (!this.event?.event_date) return '';
+    const eventDate = new Date(this.event.event_date);
+    const now = new Date();
+    
+    switch (status) {
+      case 'past':
+        return 'Прошедшее';
+      case 'ongoing':
+        const hoursToEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60));
+        if (hoursToEvent <= 0) return 'Идет сейчас';
+        return `Через ${hoursToEvent} ч`;
+      case 'upcoming':
+        const daysToEvent = Math.floor((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return `Через ${daysToEvent} д`;
+      default:
+        return '';
+    }
+  }
+
+  getTimeRemainingClass(): string {
+    return this.getEventTimeStatus();
   }
 
   retryLoad(): void {
@@ -621,21 +808,21 @@ export class EventDetailsDialogComponent implements OnInit {
     });
   }
 
-  getStatusColor(): string {
+  getEventStatusColor(): string {
     if (!this.event?.is_verified) return 'primary';
     if (!this.event?.is_active) return 'warn';
     if (this.isEventFull()) return 'warn';
     return 'accent';
   }
 
-  getStatusIcon(): string {
+  getEventStatusIcon(): string {
     if (!this.event?.is_verified) return 'pending';
     if (!this.event?.is_active) return 'block';
     if (this.isEventFull()) return 'hourglass_full';
     return 'check_circle';
   }
 
-  getStatusText(): string {
+  getEventStatusText(): string {
     if (!this.event?.is_verified) return 'На верификации';
     if (!this.event?.is_active) return 'Неактивно';
     if (this.isEventFull()) return 'Заполнено';
@@ -666,6 +853,14 @@ export class EventDetailsDialogComponent implements OnInit {
 
   isParticipating(): boolean {
     return this.userParticipations.has(this.event?.id);
+  }
+
+  viewEventOnMap(): void {
+    if (this.data.map && this.event?.latitude && this.event?.longitude) {
+      this.data.map.setCenter([this.event.latitude, this.event.longitude], 15);
+      this.snackBar.open('Мероприятие показано на карте', 'OK', { duration: 2000 });
+    }
+    this.onClose();
   }
 
   participate(): void {
@@ -711,6 +906,6 @@ export class EventDetailsDialogComponent implements OnInit {
   }
 
   onClose(): void {
-    this.dialogRef.close();
+    this.dialogRef.close({ refresh: true });
   }
 }
