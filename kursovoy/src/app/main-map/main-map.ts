@@ -1266,13 +1266,20 @@ export class MainMapComponent implements OnInit, AfterViewInit {
 
   // Метод для открытия диалога с деталями мероприятия
   showEventDetails(eventId: number): void {
-    // Открыть диалог с деталями мероприятия
-    this.dialog.open(EventDetailsDialogComponent, {
-      width: '800px',
-      data: { eventId }
-    });
-  }
-
+  // Закрываем все открытые балуны перед открытием диалога
+  this.placemarks.forEach(placemark => {
+    if (placemark.balloon.isOpen()) {
+      placemark.balloon.close();
+    }
+  });
+  
+  // Открыть диалог с деталями мероприятия
+  this.dialog.open(EventDetailsDialogComponent, {
+    width: '800px',
+    maxHeight: '90vh',
+    data: { eventId }
+  });
+}
   // После участия/отмены участия обновляем метку
   participateEvent(event: any): void {
     this.http.post(`http://localhost:8080/api/events/${event.id}/participate`, {}).subscribe({
