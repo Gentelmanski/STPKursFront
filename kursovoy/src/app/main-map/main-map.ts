@@ -5,7 +5,6 @@ import { Component, OnInit, AfterViewInit, ViewChild } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth';
-import { NotificationService } from '../notifications/notifications';
 
 // Angular Material импорты
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -32,6 +31,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+
+// Импорт компонента диалога
+import { EventDetailsDialogComponent } from '../event-details-dialog/event-details-dialog';
 
 declare const ymaps: any;
 
@@ -67,7 +69,6 @@ declare const ymaps: any;
     MatProgressBarModule
   ],
   template: `
-    <!-- Без изменений в шаблоне -->
     <div class="main-container">
       <!-- Верхняя панель -->
       <mat-toolbar color="primary" class="toolbar">
@@ -386,7 +387,7 @@ declare const ymaps: any;
     </div>
   `,
   styles: [`
-    /* Стили без изменений */
+    /* Стили остаются без изменений */
     .main-container {
       height: 100vh;
       display: flex;
@@ -769,7 +770,6 @@ export class MainMapComponent implements OnInit, AfterViewInit {
   @ViewChild(MatSort) sort!: MatSort;
 
   private map: any;
-  private objectManager: any;
   private userLocation: { lat: number, lng: number } | null = null;
   private placemarks: any[] = []; // Массив меток
   private userPlacemark: any; // Метка пользователя
@@ -813,7 +813,12 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     public authService: AuthService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
-  ) {}
+  ) {
+    // Экспортируем this для доступа из глобальной области видимости (для балунов)
+    (window as any).openEventDetails = (eventId: number) => {
+      this.showEventDetails(eventId);
+    };
+  }
 
   ngOnInit(): void {
     this.loadNotifications();
@@ -1022,7 +1027,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
       preset = 'islands#redDotIcon';
     }
 
-    // Создаем содержимое балуна
+    // Создаем содержимое балуна с кнопкой для открытия диалога
     const balloonContent = this.createBalloonContent(event);
 
     const placemark = new ymaps.Placemark(
@@ -1040,16 +1045,19 @@ export class MainMapComponent implements OnInit, AfterViewInit {
         preset: preset,
         balloonCloseButton: true,
         hideIconOnBalloonOpen: false,
+        openBalloonOnClick: false, // Отключаем автоматическое открытие балуна при клике
         // Можно задать свой цвет иконки
         iconColor: this.getEventColor(event)
       }
     );
 
-    // Обработчик клика на метку
+    // Обработчик клика на метку - открываем диалог
     placemark.events.add('click', (e: any) => {
       const target = e.get('target');
       const eventData = target.properties.get('eventData');
       this.showEventDetails(eventData.id);
+      // Закрываем балун если он открыт
+      target.balloon.close();
     });
 
     // Обработчик наведения на метку
@@ -1070,7 +1078,7 @@ export class MainMapComponent implements OnInit, AfterViewInit {
       : `${event.participants_count || 0}`;
 
     const body = `
-      <div class="event-balloon">
+      <div class="event-balloon" style="max-width: 300px; padding: 10px;">
         <p><strong>Тип:</strong> ${this.getEventTypeText(event.type)}</p>
         <p><strong>Дата:</strong> ${this.formatDate(event.event_date)}</p>
         <p><strong>Участники:</strong> ${participantsText}</p>
@@ -1080,18 +1088,11 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     `;
 
     const footer = `
-      <div class="balloon-actions">
-        <button onclick="window.angularComponent?.viewEventDetails(${event.id})" 
-                class="balloon-btn">
+      <div class="balloon-actions" style="padding: 10px; text-align: center;">
+        <button onclick="window.openEventDetails(${event.id})" 
+                style="background: #3f51b5; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
           Подробнее
         </button>
-        ${!this.isEventCreator(event) ? `
-          <button onclick="window.angularComponent?.participateEvent(${event.id})" 
-                  class="balloon-btn ${this.isParticipating(event) ? 'participating' : ''}"
-                  ${this.isEventFull(event) || !event.is_verified ? 'disabled' : ''}>
-            ${this.isParticipating(event) ? 'Вы участвуете' : 'Я пойду'}
-          </button>
-        ` : ''}
       </div>
     `;
 
@@ -1263,17 +1264,16 @@ export class MainMapComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Метод для открытия диалога с деталями мероприятия
   showEventDetails(eventId: number): void {
     // Открыть диалог с деталями мероприятия
-    import('../event-details-dialog/event-details-dialog').then(module => {
-      this.dialog.open(module.EventDetailsDialogComponent, {
-        width: '800px',
-        data: { eventId }
-      });
+    this.dialog.open(EventDetailsDialogComponent, {
+      width: '800px',
+      data: { eventId }
     });
   }
 
-   // После участия/отмены участия обновляем метку
+  // После участия/отмены участия обновляем метку
   participateEvent(event: any): void {
     this.http.post(`http://localhost:8080/api/events/${event.id}/participate`, {}).subscribe({
       next: () => {
