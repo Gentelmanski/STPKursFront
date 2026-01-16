@@ -29,24 +29,20 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    if (this.loginForm.invalid) return;
+  if (this.loginForm.invalid) return;
 
-    this.isLoading = true;
-    this.errorMessage = '';
+  this.isLoading = true;
+  this.errorMessage = '';
 
-    this.authService.login(this.loginForm.value).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        if (response.user.role === 'admin') {
-          this.router.navigate(['/admin/dashboard']);
-        } else {
-          this.router.navigate(['/user/dashboard']);
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = error.error?.error || 'Login failed';
-      }
-    });
-  }
+  this.authService.login(this.loginForm.value).subscribe({
+    next: (response) => {
+      this.isLoading = false;
+      this.router.navigate(['/']);
+    },
+    error: (error) => {
+      this.isLoading = false;
+      this.errorMessage = error.error?.error || 'Login failed';
+    }
+  });
+}
 }

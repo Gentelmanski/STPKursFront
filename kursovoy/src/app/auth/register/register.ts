@@ -39,29 +39,24 @@ export class RegisterComponent {
   }
 
   onSubmit(): void {
-    if (this.registerForm.invalid) return;
+  if (this.registerForm.invalid) return;
 
-    this.isLoading = true;
-    this.errorMessage = '';
+  this.isLoading = true;
+  this.errorMessage = '';
 
-    const { confirmPassword, ...registerData } = this.registerForm.value;
-    
-    this.authService.register(registerData).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        const roleName = response.user.role === 'admin' ? 'администратор' : 'пользователь';
-        alert(`✅ Вы успешно зарегистрированы как ${roleName}!`);
-        
-        if (response.user.role === 'admin') {
-          this.router.navigate(['/admin/dashboard']);
-        } else {
-          this.router.navigate(['/user/dashboard']);
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = error.error?.error || 'Ошибка регистрации';
-      }
-    });
-  }
+  const { confirmPassword, ...registerData } = this.registerForm.value;
+  
+  this.authService.register(registerData).subscribe({
+    next: (response) => {
+      this.isLoading = false;
+      const roleName = response.user.role === 'admin' ? 'администратор' : 'пользователь';
+      alert(`✅ Вы успешно зарегистрированы как ${roleName}!`);
+      this.router.navigate(['/']);
+    },
+    error: (error) => {
+      this.isLoading = false;
+      this.errorMessage = error.error?.error || 'Ошибка регистрации';
+    }
+  });
+}
 }
